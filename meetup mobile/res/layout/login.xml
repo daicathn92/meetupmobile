@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="25dp"
+    android:paddingRight="25dp"
+    android:paddingBottom="80dp"
+    android:orientation="vertical" 
+    android:background="#DD000000"
+    android:gravity="center">
+
+    <EditText
+        android:id="@+id/login_ed_username"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:background="@drawable/custom_et1"
+        android:hint="User name"
+        android:lines="1"
+        android:textSize="25sp"
+        android:paddingBottom="5dp"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:paddingTop="5dp" />
+
+    <EditText
+        android:id="@+id/login_ed_pass"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textPassword"
+        android:textSize="25sp"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:background="@drawable/custom_et1"
+        android:layout_marginBottom="10dp"
+        android:lines="1"
+        android:hint="Password" />
+    
+    <TextView 
+        android:id="@+id/login_tv_notify"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textStyle="italic"
+        android:textColor="#0000FF"
+        android:text=""/>
+    
+
+    <Button
+        android:id="@+id/login_btn_login"
+        style="@style/btnStyleGenoa"
+        android:layout_width="match_parent"
+        android:layout_height="35dp"
+        android:layout_marginBottom="3dp"
+        android:text="Login"
+        android:textColor="@android:color/white" />
+    
+    <Button
+        android:id="@+id/login_btn_signup"
+        style="@style/btnStyleGenoa"
+        android:layout_width="match_parent"
+        android:layout_height="35dp"
+        android:text="Sign up"
+        android:textColor="@android:color/white" />
+
+</LinearLayout>

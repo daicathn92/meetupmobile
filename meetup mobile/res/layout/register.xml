@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="25dp"
+    android:paddingRight="25dp"
+    android:paddingBottom="80dp"
+    android:orientation="vertical" 
+    android:background="#DD000000"
+    android:gravity="center">
+
+    <EditText
+        android:id="@+id/register_ed_username"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:background="@drawable/custom_et1"
+        android:hint="User name"
+        android:lines="1"
+        android:textSize="20sp"
+        android:paddingBottom="5dp"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:paddingTop="5dp" />
+
+    <EditText
+        android:id="@+id/register_ed_pass"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textPassword"
+        android:textSize="20sp"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:background="@drawable/custom_et1"
+        android:layout_marginBottom="10dp"
+        android:lines="1"
+        android:hint="Password" />
+    
+    <EditText
+        android:id="@+id/register_ed_passconfirm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textPassword"
+        android:textSize="20sp"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:background="@drawable/custom_et1"
+        android:layout_marginBottom="10dp"
+        android:lines="1"
+        android:hint="Confirm Password" />
+
+    <LinearLayout 
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        
+        <TextView 
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Gender"
+            android:textSize="18sp"
+            android:textColor="#FFD700"
+            android:layout_marginRight="30dp"/>
+        
+        <Spinner
+	        android:id="@+id/register_sp_gender"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:entries="@array/arr_gender" />
+        
+    </LinearLayout>
+    
+    <TextView 
+        android:id="@+id/register_tv_notify"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textStyle="italic"
+        android:textColor="#0000FF"
+        android:text="ssssssssss"/>
+    
+
+    <Button
+        android:id="@+id/register_btn_register"
+        style="@style/btnStyleGenoa"
+        android:layout_width="match_parent"
+        android:layout_height="35dp"
+        android:layout_marginBottom="3dp"
+        android:text="Register"
+        android:textColor="@android:color/white" />
+
+</LinearLayout>
