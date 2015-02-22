@@ -6,5 +6,5 @@ public class Const {
 	
 	public static String username = "";
 	public static String password = "";
-	public static String id = "";
+	public static String iduser = "";
 }

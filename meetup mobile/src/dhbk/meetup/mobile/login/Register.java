@@ -9,6 +9,7 @@ import org.apache.http.util.EntityUtils;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -24,6 +25,8 @@ import dhbk.meetup.mobile.R;
 import dhbk.meetup.mobile.event.EventHomePage;
 import dhbk.meetup.mobile.httpconnect.HttpConnect;
 import dhbk.meetup.mobile.utils.Const;
+import dhbk.meetup.mobile.utils.DialogWaiting;
+import dhbk.meetup.mobile.utils.Utils;
 
 public class Register extends Activity implements OnClickListener{
 
@@ -35,6 +38,8 @@ public class Register extends Activity implements OnClickListener{
 	private TextView tv_notify;
 	private Spinner sp_gender;
 	
+	private DialogWaiting dialog;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
@@ -42,6 +47,7 @@ public class Register extends Activity implements OnClickListener{
 		setContentView(R.layout.register);
 		
 		conn = new HttpConnect();
+		dialog = new DialogWaiting(this);
 		
 		ed_name = (EditText) findViewById(R.id.register_ed_username);
 		ed_pass = (EditText) findViewById(R.id.register_ed_pass);
@@ -58,10 +64,14 @@ public class Register extends Activity implements OnClickListener{
 		// TODO Auto-generated method stub
 		switch(v.getId()) {
 		case R.id.register_btn_register :
-			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-				new asyncRegister().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+			if(Utils.isConnectNetwork(Register.this)) {
+				if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+					new asyncRegister().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+				} else {
+					new asyncRegister().execute() ;
+				}
 			} else {
-				new asyncRegister().execute() ;
+				Toast.makeText(getApplicationContext(), "Not connected network", Toast.LENGTH_SHORT).show();
 			}
 			break;
 		default : break;
@@ -100,12 +110,21 @@ public class Register extends Activity implements OnClickListener{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				return "false2";
+			} finally {
+				dialog.closeProgressDialog();
 			}
 			
 		}
 	}
 	
 	private class asyncRegister extends AsyncTask<String, Void, String> {
+		
+		@Override
+		protected void onPreExecute() {
+			// TODO Auto-generated method stub
+			super.onPreExecute();
+			dialog.showProgressDialog();
+		}
 		
 		@Override
 		protected String doInBackground(String... params) {
@@ -125,7 +144,7 @@ public class Register extends Activity implements OnClickListener{
 			} else {
 				try {
 					int res = Integer.parseInt(result);
-					Const.id = result;
+					Const.iduser = result;
 					Const.username = ed_name.getText().toString();
 					Const.password = ed_pass.getText().toString();
 					
@@ -136,6 +155,7 @@ public class Register extends Activity implements OnClickListener{
 					tv_notify.setText("try again");
 				}
 			}
+			dialog.closeProgressDialog();
 		}
 	}
 
