@@ -1,6 +1,16 @@
 package dhbk.meetup.mobile.event;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.ParseException;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -9,25 +19,35 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.webkit.JsPromptResult;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.PopupMenu;
+import android.widget.PopupMenu.OnMenuItemClickListener;
+import android.widget.Toast;
 import dhbk.meetup.mobile.R;
+import dhbk.meetup.mobile.event.adapter.ListEventAdapter;
 import dhbk.meetup.mobile.event.object.EventObject;
 import dhbk.meetup.mobile.httpconnect.HttpConnect;
+import dhbk.meetup.mobile.utils.Const;
 import dhbk.meetup.mobile.utils.DialogWaiting;
 import dhbk.meetup.mobile.utils.Utils;
 
-public class EventHomePage extends Activity implements OnClickListener{
+public class EventHomePage extends Activity implements OnClickListener, OnMenuItemClickListener{
 
 	public static final int TIME_UPDATE = 5000;
+	public static final String EVENT_LISTEVENT = "listevent";
 	
 	private HttpConnect conn;
 	private ListView lv_event;
 	private ListEventAdapter listeventAdapter;
-//	private ArrayList<String> title, own, place, time, content;
 	private ArrayList<EventObject> listevent = new ArrayList<EventObject>();
+	private ArrayList<EventObject> listeventupdate;
 	
 	private Handler handler_updateEvent;
 	private Runnable update = new Runnable() {
@@ -47,7 +67,9 @@ public class EventHomePage extends Activity implements OnClickListener{
 		}
 	};
 	
-//	private DialogWaiting dialog;
+	private DialogWaiting dialog;
+	private PopupMenu popupMenu;
+	private AtomicBoolean isFilter = new AtomicBoolean(false);
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -55,26 +77,47 @@ public class EventHomePage extends Activity implements OnClickListener{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.eventhomepage);
 		
-		handler_updateEvent = new Handler();
-		handler_updateEvent.post(update);
+//		handler_updateEvent = new Handler();
+//		handler_updateEvent.post(update);
 		
-//		title = new ArrayList<String>();
-//		own = new ArrayList<String>();
-//		place = new ArrayList<String>();
-//		time = new ArrayList<String>();
-//		content = new ArrayList<String>();
-		
-		listeventAdapter = new ListEventAdapter(this, listevent);
+//		listevent.add(new EventObject("a", "", "", "", "", "", ""));
+		listeventAdapter = new ListEventAdapter(EventHomePage.this, listevent);
 		
 		conn = new HttpConnect();
-//		dialog = new DialogWaiting(this);
+		dialog = new DialogWaiting(this);
 		
 		lv_event = (ListView) findViewById(R.id.homepage_lv_event);
 		lv_event.setAdapter(listeventAdapter);
+		lv_event.setOnItemClickListener(new OnItemClickListener() {
+
+					@Override
+					public void onItemClick(AdapterView<?> arg0, View arg1,
+							int arg2, long arg3) {
+						// TODO Auto-generated method stub
+						Intent it = new Intent(EventHomePage.this, AEvent.class);
+						it.putExtra("idevent", listevent.get(arg2).idevent);
+						startActivity(it);
+					}
+		});
+		
 		ImageButton imgbtn_createevent = (ImageButton) findViewById(R.id.homepage_imgbtn_createevent);
 		imgbtn_createevent.setOnClickListener(this);
-		ImageButton imgbtn_filter = (ImageButton) findViewById(R.id.homepage_imgbtn_filter);
+		final ImageButton imgbtn_filter = (ImageButton) findViewById(R.id.homepage_imgbtn_filter);
 		imgbtn_filter.setOnClickListener(this);
+		popupMenu = new PopupMenu(this, imgbtn_filter);
+		popupMenu.setOnMenuItemClickListener(this);
+		popupMenu.getMenuInflater().inflate(R.menu.menufilter, popupMenu.getMenu());
+		
+		// load new news
+		if(Utils.isConnectNetwork(EventHomePage.this)) {
+			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+				new asyncUpdateEvent().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "all");
+			} else {
+				new asyncUpdateEvent().execute("all");
+			}
+		} else {
+			Toast.makeText(getApplicationContext(), "Network not connected", Toast.LENGTH_SHORT).show();
+		}
 	}
 
 	@Override
@@ -86,33 +129,129 @@ public class EventHomePage extends Activity implements OnClickListener{
 			startActivity(it);
 			break;
 		case R.id.homepage_imgbtn_filter :
-			
+			popupMenu.show();
 			break;
 		default : break; 
 		}
 	}
 	
-	public void updateEvent() {
-		
-	}
-	
-	public void changeDataIfNeed () {
-		
-	}
-	
-	private class asyncUpdateEvent extends AsyncTask<String, Void, String> {
-		
-		@Override
-		protected String doInBackground(String... params) {
-			// TODO Auto-generated method stub
-			updateEvent();
-			return null;
+	@Override
+	public boolean onMenuItemClick(MenuItem item) {
+		// TODO Auto-generated method stub
+		String filter = "";
+		switch(item.getItemId()) {
+		case R.id.filter_all :
+			filter = "all";
+			break;
+		case R.id.filter_own :
+			filter = "own";
+			break;
+		case R.id.filter_registered :
+			filter = "registered";
+			break;
+		case R.id.filter_occurred :
+			filter = "occurred";
+			break;
+		default : return false;
 		}
 		
-		protected void onPostExecute(String result) {
+		if(filter.equals("")){
+			return false;
+		} else {
+			if(Utils.isConnectNetwork(EventHomePage.this)) {
+				if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+					new asyncUpdateEvent().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, filter);
+				} else {
+					new asyncUpdateEvent().execute(filter);
+				}
+			} else {
+				Toast.makeText(getApplicationContext(), "Network not connected", Toast.LENGTH_SHORT).show();
+			}
+			return true;
+		}
+	}
+	
+	public boolean updateEvent(String filter) {
+		String url = Const.DOMAIN_NAME + EVENT_LISTEVENT;
+		
+		try {
+			ArrayList<String[]> values = new ArrayList<String[]>();
+			values.add(new String[] {"filter", filter});
+			values.add(new String[] {"iduser", Const.iduser});
+			HttpResponse response = conn.sendRequestGet(url, null, values);
+			listeventupdate = listeventFromJson(new JSONObject(EntityUtils.toString(response.getEntity())));
+//			if(listeventupdate.size() > 0)
+				return true;
+//			else return false;
+		} catch (ClientProtocolException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		} finally {
+			dialog.closeProgressDialog();
+		}
+		
+	}
+	
+	public void changeDataIfNeed (boolean isChange) {
+		if(isChange) {
+			listevent.clear();
+			for(EventObject eo : listeventupdate) {
+				listevent.add(new EventObject(eo));
+			}
+			System.out.println("SIZE : " + listevent.size());
+			listeventAdapter.notifyDataSetChanged();
+		} else {
+			
+		}
+	}
+	
+	public ArrayList<EventObject> listeventFromJson (JSONObject jso_parent) throws JSONException {
+		System.out.println("LISTEVENT JSON : " + jso_parent.toString());
+		ArrayList<EventObject> arr = new ArrayList<EventObject>();
+		JSONArray jsa_listevent = jso_parent.getJSONArray("listevent");
+		for(int i = 0; i < jsa_listevent.length(); i++) {
+			JSONObject jso = jsa_listevent.getJSONObject(i);
+			arr.add(new EventObject(jso.getString("title"), jso.getString("name"), jso.getString("place"), jso.getString("time"),
+							jso.getString("description"), jso.getString("idevent"), jso.getString("iduser")));
+		}
+		return arr;
+	}
+	
+	private class asyncUpdateEvent extends AsyncTask<String, Void, Boolean> {
+		
+		@Override
+		protected void onPreExecute() {
+			// TODO Auto-generated method stub
+			super.onPreExecute();
+			dialog.showProgressDialog();
+		}
+		
+		@Override
+		protected Boolean doInBackground(String... params) {
+			// TODO Auto-generated method stub
+			return updateEvent(params[0]);
+		}
+		
+		protected void onPostExecute(Boolean result) {
 			super.onPostExecute(result);
-			changeDataIfNeed();
-			handler_updateEvent.postDelayed(update, TIME_UPDATE);
+			if(result)
+				changeDataIfNeed(true);
+			dialog.closeProgressDialog();
+//			handler_updateEvent.postDelayed(update, TIME_UPDATE);
 		};
 	}
+
 }

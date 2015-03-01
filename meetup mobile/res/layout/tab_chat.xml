@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"  >
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/tabchat_rl"
+       	android:layout_marginLeft="5dp" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/tabchat_tv_message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ABC" />
+
+        </LinearLayout>
+    </ScrollView>
+    
+    <RelativeLayout
+        android:id="@+id/tabchat_rl"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_alignParentBottom="true" >
+
+        <ImageButton
+            android:id="@+id/tabchat_imgbtn_send"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/sendsms" />
+        
+        <EditText
+            android:id="@+id/tabchat_ed_message"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginLeft="5dp"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:gravity="top"
+            android:background="@null"
+            android:layout_toLeftOf="@+id/tabchat_imgbtn_send"
+            android:hint="Message" >
+
+            <requestFocus />
+        </EditText>
+    </RelativeLayout>
+</RelativeLayout>

@@ -29,7 +29,7 @@
             android:id="@+id/create_ed_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/custom_et2"
+            android:background="@drawable/custom_et3"
             android:lines="1"
             android:textStyle="bold"
             android:textSize="22sp"
@@ -132,6 +132,7 @@
 		    android:layout_height="match_parent"
 		    android:hint="Content"
 		    android:gravity="left"
+		    android:background="@drawable/custom_et3"
 		    android:inputType="textMultiLine" />
         
     </LinearLayout>

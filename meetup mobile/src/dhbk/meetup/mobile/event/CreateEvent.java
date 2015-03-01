@@ -137,7 +137,7 @@ public class CreateEvent extends Activity implements OnClickListener, OnDateSetL
 	@Override
 	public void onDateSet(DatePicker arg0, int arg1, int arg2, int arg3) {
 		// TODO Auto-generated method stub
-		tv_date.setText(arg1+ "-" +arg2+ "-" +arg3);
+		tv_date.setText(arg1+ "-" +(arg2+1)+ "-" +arg3);
 	}
 	
 	public void showDatePickerDialog () {
@@ -184,6 +184,8 @@ public class CreateEvent extends Activity implements OnClickListener, OnDateSetL
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				return "false 3";
+			} finally {
+				dialog.closeProgressDialog();
 			}
 		}
 	}

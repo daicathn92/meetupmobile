@@ -33,9 +33,9 @@
    </style>
    
     <style name="listview_grey" parent="@android:style/Widget.ListView">
-	    <item name="android:background">#44CCCCCC</item>
+	    <item name="android:background">#FFFFFF</item>
 	    <item name="android:cacheColorHint">@android:color/transparent</item>
-	    <item name="android:divider">#AAAAAAAA</item>
-	    <item name="android:dividerHeight">2dp</item>
+	    <item name="android:divider">#DCDEE3</item>
+	    <item name="android:dividerHeight">15dp</item>
 	</style>
 </resources>

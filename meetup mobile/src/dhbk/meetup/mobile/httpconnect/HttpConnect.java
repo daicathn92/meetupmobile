@@ -50,7 +50,7 @@ public class HttpConnect {
 			for(Header header : headers) 
 				request.addHeader(header);
 		}
-		request.addHeader("Accept", "application/json");
+//		request.addHeader("Accept", "application/json");
 		return httpClient.execute(request) ;
 	}
 	
@@ -76,7 +76,7 @@ public class HttpConnect {
 			params.add(new BasicNameValuePair(value[0], value[1])) ;
 		}
 		
-		request.setEntity(new UrlEncodedFormEntity(params));
+		request.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
 		
 		return httpClient.execute(request) ;
 	}
