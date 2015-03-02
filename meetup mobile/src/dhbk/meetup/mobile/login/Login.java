@@ -10,7 +10,9 @@ import org.apache.http.util.EntityUtils;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -56,6 +58,21 @@ public class Login extends Activity implements OnClickListener{
 		Button btn_signup = (Button) findViewById(R.id.login_btn_signup);
 		btn_login.setOnClickListener(this);
 		btn_signup.setOnClickListener(this);
+		
+		SharedPreferences prefs = getSharedPreferences(Const.PREFERENCE_MEETUP_MOBILE, Context.MODE_PRIVATE);
+		String username = prefs.getString("username", "");
+		String password = prefs.getString("password", "");
+		if(!(username.equals("") || password.equals(""))) {
+			if(Utils.isConnectNetwork(Login.this)) {
+				if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+					new asyncLogin().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, username, password);
+				} else {
+					new asyncLogin().execute(username, password) ;
+				}
+			}
+		} else {
+			System.out.println("EMPTY * EMPTY");
+		}
 	}
 
 	@SuppressLint("NewApi")
@@ -66,9 +83,9 @@ public class Login extends Activity implements OnClickListener{
 		case R.id.login_btn_login :
 			if(Utils.isConnectNetwork(Login.this)) {
 				if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-					new asyncLogin().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+					new asyncLogin().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, ed_username.getText().toString(), ed_password.getText().toString());
 				} else {
-					new asyncLogin().execute() ;
+					new asyncLogin().execute(ed_username.getText().toString(), ed_password.getText().toString()) ;
 				}
 			} else {
 				Toast.makeText(getApplicationContext(), "Not connected network", Toast.LENGTH_SHORT).show();
@@ -83,25 +100,23 @@ public class Login extends Activity implements OnClickListener{
 		}
 	}
 	
-	private boolean authenticLogin () {
+	private boolean authenticLogin (String username, String password) {
 		String url = Const.DOMAIN_NAME + USER_LOGIN;
 		try {
-			String name = ed_username.getText().toString();
-			String pass = ed_password.getText().toString();
-			if(name.equals("") || pass.equals(""))
+			if(username.equals("") || password.equals(""))
 				return false;
 			else {
 				ArrayList<String[]> values = new ArrayList<String[]>();
-				values.add(new String[] {"name", name});
-				values.add(new String[] {"password", pass});
+				values.add(new String[] {"name", username});
+				values.add(new String[] {"password", password});
 				HttpResponse response = conn.sendRequestPost(url, null, values);
 				String result = EntityUtils.toString(response.getEntity());
 				System.out.println("RESULT LOGIN : " + result);
 				try {
 					int res = Integer.parseInt(result);
 					Const.iduser = result;
-					Const.username = name;
-					Const.password = pass;
+					Const.username = username;
+					Const.password = password;
 					return true;
 				} catch (Exception e) {
 					return false;
@@ -132,7 +147,7 @@ public class Login extends Activity implements OnClickListener{
 		@Override
 		protected Boolean doInBackground(String... params) {
 			// TODO Auto-generated method stub
-			return authenticLogin();
+			return authenticLogin(params[0], params[1]);
 		}
 		
 		@Override

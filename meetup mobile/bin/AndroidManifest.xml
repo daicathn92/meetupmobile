@@ -30,8 +30,19 @@
         <activity android:name="dhbk.meetup.mobile.event.EventHomePage"></activity>
         <activity android:name="dhbk.meetup.mobile.event.CreateEvent"></activity>
         <activity android:name="dhbk.meetup.mobile.event.PlaceEvent"></activity>
-        <activity android:name="dhbk.meetup.mobile.event.AEvent"></activity>
+        <activity android:name="dhbk.meetup.mobile.event.AEvent"
+            	  android:launchMode="singleTask"
+    	  		  android:taskAffinity=""
+    			  android:excludeFromRecents="true">
+        </activity>
         <activity android:name="dhbk.meetup.mobile.event.EditEvent"></activity>
+        
+        <service android:name="dhbk.meetup.mobile.event.service.AlarmService"
+            	 android:exported="true">
+        </service>
+        <service android:name="dhbk.meetup.mobile.event.service.NewsService"
+            	 android:exported="true">
+        </service>
         
     </application>
 

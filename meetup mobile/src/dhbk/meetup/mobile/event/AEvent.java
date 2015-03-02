@@ -96,6 +96,7 @@ public class AEvent extends FragmentActivity implements OnTabChangeListener, OnP
 		
 		th.setIdevent(idevent);
 		tc.setIdevent(idevent);
+		tm.setIdevent(idevent);
 		
 		list.add(th);
 		list.add(tm);

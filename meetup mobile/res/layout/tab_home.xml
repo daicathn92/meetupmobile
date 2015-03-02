@@ -50,18 +50,39 @@
 	        android:background="#DCDEE3">
 	    </LinearLayout>
 	    
-	    <TextView
-	        android:id="@+id/tabhome_tv_own"
-	        android:layout_width="wrap_content"
+	    <LinearLayout 
+	        android:layout_width="match_parent"
 	        android:layout_height="wrap_content"
-	        android:textStyle="italic"
-	        android:layout_marginLeft="5dp"
-	        android:text="Own" />
-
+	        android:orientation="horizontal">
+	        
+	        <TextView
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:textStyle="italic"
+		        android:layout_marginLeft="5dp"
+		        android:text="Tạo bởi : " />
+		    
+		    <TextView
+		        android:id="@+id/tabhome_tv_own"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:textStyle="italic"
+		        android:layout_marginLeft="5dp"
+		        android:text="" />
+	    </LinearLayout>
+	    
 	    <LinearLayout 
 	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content"
 	        android:orientation="horizontal" >
+	        
+	        <TextView
+		        android:layout_gravity="center"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:textStyle="italic"
+		        android:layout_marginLeft="5dp"
+		        android:text="Tại : " />
 	        
 	        <TextView
 		        android:id="@+id/tabhome_tv_place"
@@ -70,7 +91,7 @@
 		        android:layout_height="wrap_content"
 		        android:textStyle="italic"
 		        android:layout_marginLeft="5dp"
-		        android:text="Place" />
+		        android:text="" />
 	        
 	        <ImageButton
 	            android:id="@+id/tabhome_imgbtn_place"
@@ -81,14 +102,28 @@
 	        
 	    </LinearLayout>
 	    
-	    <TextView
-	        android:id="@+id/tabhome_tv_time"
+	    <LinearLayout 
 	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content"
-	        android:textStyle="italic"
-	        android:layout_marginLeft="5dp"
-	        android:text="Time" />
-	
+	        android:orientation="horizontal" >
+	        
+	        <TextView
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:textStyle="italic"
+		        android:layout_marginLeft="5dp"
+		        android:text="Vào lúc : " />
+	        
+	        <TextView
+		        android:id="@+id/tabhome_tv_time"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:textStyle="italic"
+		        android:layout_marginLeft="5dp"
+		        android:text="" />
+	        
+        </LinearLayout>
+	    
 	    <LinearLayout 
 	        android:layout_width="match_parent"
 	        android:layout_height="1dp"

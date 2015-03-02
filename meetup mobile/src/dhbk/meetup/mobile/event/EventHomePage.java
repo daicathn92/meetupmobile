@@ -14,15 +14,18 @@ import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.webkit.JsPromptResult;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ImageButton;
@@ -33,7 +36,9 @@ import android.widget.Toast;
 import dhbk.meetup.mobile.R;
 import dhbk.meetup.mobile.event.adapter.ListEventAdapter;
 import dhbk.meetup.mobile.event.object.EventObject;
+import dhbk.meetup.mobile.event.service.NewsService;
 import dhbk.meetup.mobile.httpconnect.HttpConnect;
+import dhbk.meetup.mobile.login.Login;
 import dhbk.meetup.mobile.utils.Const;
 import dhbk.meetup.mobile.utils.DialogWaiting;
 import dhbk.meetup.mobile.utils.Utils;
@@ -42,6 +47,8 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 
 	public static final int TIME_UPDATE = 5000;
 	public static final String EVENT_LISTEVENT = "listevent";
+	
+	public static final int MENU_SIGNOUT = Menu.FIRST; 
 	
 	private HttpConnect conn;
 	private ListView lv_event;
@@ -76,6 +83,7 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.eventhomepage);
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		
 //		handler_updateEvent = new Handler();
 //		handler_updateEvent.post(update);
@@ -118,8 +126,50 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 		} else {
 			Toast.makeText(getApplicationContext(), "Network not connected", Toast.LENGTH_SHORT).show();
 		}
+		
+		// start newsservice
+		System.out.println("START SERVICE");
+		Intent it = new Intent(getApplicationContext(), NewsService.class);
+		it.putExtra("iduser", Const.iduser);
+		startService(it);
+		
+		// save username, password
+		SharedPreferences prefs = getSharedPreferences(Const.PREFERENCE_MEETUP_MOBILE, Context.MODE_PRIVATE);
+		SharedPreferences.Editor editor = prefs.edit();
+		editor.putString("username", Const.username);
+		editor.putString("password", Const.password);
+		editor.commit();
 	}
 
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// TODO Auto-generated method stub
+		super.onCreateOptionsMenu(menu);
+		menu.add(0, MENU_SIGNOUT, 0, "Sign out");
+		return true;
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// TODO Auto-generated method stub
+		switch(item.getItemId()) {
+		case MENU_SIGNOUT :
+			SharedPreferences prefs = getSharedPreferences(Const.PREFERENCE_MEETUP_MOBILE, Context.MODE_PRIVATE);
+			SharedPreferences.Editor editor = prefs.edit();
+			editor.putString("username", "");
+			editor.putString("password", "");
+			editor.commit();
+			Intent itS = new Intent(getApplicationContext(), NewsService.class);
+			itS.putExtra("iduser", "0");
+			startService(itS);
+			Intent it = new Intent(getApplicationContext(), Login.class);
+			startActivity(it);
+			finish();
+			return true;
+		default : return false;
+		}
+	}
+	
 	@Override
 	public void onClick(View v) {
 		// TODO Auto-generated method stub

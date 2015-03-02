@@ -25,7 +25,6 @@ public class ListEventAdapter extends ArrayAdapter<EventObject>{
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		// TODO Auto-generated method stub
-		System.out.println("BBB");
 		View item = context.getLayoutInflater().inflate(R.layout.event_item, null, true);
 		TextView tv_title = (TextView) item.findViewById(R.id.eventitem_title);
 		TextView tv_own = (TextView) item.findViewById(R.id.eventitem_own);
@@ -38,7 +37,6 @@ public class ListEventAdapter extends ArrayAdapter<EventObject>{
 		tv_place.setText("Tại : " + eventObject.get(position).place);
 		tv_time.setText("Vào lúc : " + eventObject.get(position).time);
 		tv_content.setText(eventObject.get(position).content);
-		System.out.println("ZZZZZZZZZZZZ");
 		return item;
 	}
 	

@@ -15,6 +15,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.HTTP;
 
 public class HttpConnect {
 
@@ -41,7 +42,7 @@ public class HttpConnect {
 			for (String[] value : values) {
 				params.add(new BasicNameValuePair(value[0], value[1])) ;
 			}
-			String paramsUrl = URLEncodedUtils.format(params, "UTF-8");
+			String paramsUrl = URLEncodedUtils.format(params, HTTP.UTF_8);
 			urlfull = urlfull + "?" + paramsUrl;
 		}
 		HttpGet request = new HttpGet(urlfull) ;
