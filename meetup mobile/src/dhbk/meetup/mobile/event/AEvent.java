@@ -2,7 +2,9 @@ package dhbk.meetup.mobile.event;
 
 import java.util.ArrayList;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -14,6 +16,7 @@ import android.widget.TabHost.TabSpec;
 import dhbk.meetup.mobile.R;
 import dhbk.meetup.mobile.event.adapter.PageAdapter;
 import dhbk.meetup.mobile.event.adapter.TabFactory;
+import dhbk.meetup.mobile.utils.Const;
 
 public class AEvent extends FragmentActivity implements OnTabChangeListener, OnPageChangeListener{
 
@@ -26,6 +29,8 @@ public class AEvent extends FragmentActivity implements OnTabChangeListener, OnP
 	private ViewPager viewPage;
 	
 	private String idevent = "";
+	private boolean ismember = false;
+	private String idusercreate = "-1", iduser;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +40,18 @@ public class AEvent extends FragmentActivity implements OnTabChangeListener, OnP
 		
 		Intent it = getIntent();
 		idevent = it.getExtras().getString("idevent");
+		ismember = it.getExtras().getBoolean("ismember");
+		idusercreate = it.getExtras().getString("idusercreate");
+		iduser = it.getExtras().getString("iduser");
+		
+		// set username, password khi goi tu notify den
+		if(!iduser.equals("none")) {
+			Const.iduser = iduser;
+			SharedPreferences prefs = getSharedPreferences(Const.PREFERENCE_MEETUP_MOBILE, Context.MODE_PRIVATE);
+			Const.username = prefs.getString("username", "");
+			Const.password = prefs.getString("password", "");
+		}
+		
 		System.out.println("IDEVENT : " + idevent);
 		
 		tabhost = (TabHost) findViewById(android.R.id.tabhost);
@@ -43,19 +60,23 @@ public class AEvent extends FragmentActivity implements OnTabChangeListener, OnP
 		viewPage = (ViewPager) findViewById(R.id.tabhost_viewpager);
 		
 		TabSpec tsHome = (tabhost.newTabSpec(TAB_HOME)).setIndicator(TAB_HOME);
-		TabSpec tsMember = (tabhost.newTabSpec(TAB_MEMBER)).setIndicator(TAB_MEMBER);
-		TabSpec tsChat = (tabhost.newTabSpec(TAB_CHAT)).setIndicator(TAB_CHAT);
-		TabSpec tsDoc = (tabhost.newTabSpec(TAB_DOC)).setIndicator(TAB_DOC);
-		
 		tsHome.setContent(new TabFactory(this));
-		tsMember.setContent(new TabFactory(this));
-		tsChat.setContent(new TabFactory(this));
-		tsDoc.setContent(new TabFactory(this));
-		
 		tabhost.addTab(tsHome);
-		tabhost.addTab(tsMember);
-		tabhost.addTab(tsChat);
-		tabhost.addTab(tsDoc);
+		
+		if(ismember) {
+			TabSpec tsMember = (tabhost.newTabSpec(TAB_MEMBER)).setIndicator(TAB_MEMBER);
+			TabSpec tsChat = (tabhost.newTabSpec(TAB_CHAT)).setIndicator(TAB_CHAT);
+			TabSpec tsDoc = (tabhost.newTabSpec(TAB_DOC)).setIndicator(TAB_DOC);
+			
+			
+			tsMember.setContent(new TabFactory(this));
+			tsChat.setContent(new TabFactory(this));
+			tsDoc.setContent(new TabFactory(this));
+			
+			tabhost.addTab(tsMember);
+			tabhost.addTab(tsChat);
+			tabhost.addTab(tsDoc);
+		}
 		
 		PageAdapter pageAdapter = new PageAdapter(getSupportFragmentManager(), getListFragments());	
 		viewPage.setAdapter(pageAdapter);
@@ -90,18 +111,23 @@ public class AEvent extends FragmentActivity implements OnTabChangeListener, OnP
 		ArrayList<Fragment> list = new ArrayList<Fragment>();
 		
 		TabHome th = new TabHome();
-		TabMember tm =new TabMember();
-		TabChat tc = new TabChat();
-		TabDoc td = new TabDoc();
-		
 		th.setIdevent(idevent);
-		tc.setIdevent(idevent);
-		tm.setIdevent(idevent);
-		
+		th.setIsmember(ismember);
+		th.setIdusercreate(idusercreate);
 		list.add(th);
-		list.add(tm);
-		list.add(tc);
-		list.add(td);
+		
+		if(ismember) {
+			TabMember tm =new TabMember();
+			TabChat tc = new TabChat();
+			TabDoc td = new TabDoc();
+			
+			tc.setIdevent(idevent);
+			tm.setIdevent(idevent);
+			
+			list.add(tm);
+			list.add(tc);
+			list.add(td);
+		}
 		
 		return list;
 	}

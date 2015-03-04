@@ -10,6 +10,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.R.id;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,6 +24,8 @@ import android.widget.ListView;
 import android.widget.Toast;
 import dhbk.meetup.mobile.R;
 import dhbk.meetup.mobile.event.adapter.ListMemberAdapter;
+import dhbk.meetup.mobile.event.adapter.ListNotMemberAdapter;
+import dhbk.meetup.mobile.event.member.InviteMember;
 import dhbk.meetup.mobile.event.object.MemberObject;
 import dhbk.meetup.mobile.httpconnect.HttpConnect;
 import dhbk.meetup.mobile.utils.Const;
@@ -33,13 +36,19 @@ public class TabMember extends Fragment implements OnClickListener{
 
 	public static final String EVENT_SENDNOTIFY = "sendnotify";
 	public static final String EVENT_LISTMEMBER = "listmember";
+	public static final String EVENT_SENDINVITE = "sendinvite";
 	
 	private String idevent;
 	private HttpConnect conn;
 	private DialogWaiting dialog;
 	
 	private ListMemberAdapter listMemberAdapter;
+	public	ListNotMemberAdapter listnotmemberAdapter;
 	private ArrayList<MemberObject> listmember = new ArrayList<MemberObject>();
+	public ArrayList<MemberObject> listnotmember = new ArrayList<MemberObject>();
+	private InviteMember inviteMemberDialog;
+	
+	ListView lv_member;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -48,6 +57,10 @@ public class TabMember extends Fragment implements OnClickListener{
 		System.out.println("ONCREATE TABMEMBER");
 		conn = new HttpConnect();
 		dialog = new DialogWaiting(getActivity());
+		
+		listMemberAdapter = new ListMemberAdapter(TabMember.this, listmember);
+		listnotmemberAdapter = new ListNotMemberAdapter(this, listnotmember);
+		inviteMemberDialog = new InviteMember(this);
 	}
 	
 	@Override
@@ -56,8 +69,7 @@ public class TabMember extends Fragment implements OnClickListener{
 		// TODO Auto-generated method stub
 		View v = inflater.inflate(R.layout.tab_member, container, false);
 		
-		ListView lv_member = (ListView) v.findViewById(R.id.tabmember_lv_member);
-		listMemberAdapter = new ListMemberAdapter(TabMember.this, listmember);
+		lv_member = (ListView) v.findViewById(R.id.tabmember_lv_member);
 		lv_member.setAdapter(listMemberAdapter);
 		
 		ImageButton imgbtn_invite = (ImageButton) v.findViewById(R.id.tabmember_imgbtn_invite);
@@ -67,9 +79,9 @@ public class TabMember extends Fragment implements OnClickListener{
 		
 		if(Utils.isConnectNetwork(getActivity())) {
 			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-				new asyncListmember().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+				new asyncListmember().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "member");
 			} else {
-				new asyncListmember().execute() ;
+				new asyncListmember().execute("member") ;
 			}
 		} 
 		
@@ -96,7 +108,15 @@ public class TabMember extends Fragment implements OnClickListener{
 		// TODO Auto-generated method stub
 		switch(v.getId()) {
 		case R.id.tabmember_imgbtn_invite :
-			
+			if(Utils.isConnectNetwork(getActivity())) {
+				if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+					new asyncListmember().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "notmember");
+				} else {
+					new asyncListmember().execute("notmember") ;
+				}
+			} else {
+				Toast.makeText(getActivity().getApplicationContext(), "Not connected network", Toast.LENGTH_SHORT).show();
+			}
 			break;
 		case R.id.tabmember_imgbtn_track :
 			
@@ -109,12 +129,12 @@ public class TabMember extends Fragment implements OnClickListener{
 		this.idevent = idevent;
 	}
 	
-	public void sendNotify (String idmember) {
+	public void sendNotify (String idmember, String position) {
 		if(Utils.isConnectNetwork(getActivity())) {
 			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-				new asyncSendNotify().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, idmember);
+				new asyncSendNotify().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, idmember, position);
 			} else {
-				new asyncSendNotify().execute(idmember) ;
+				new asyncSendNotify().execute(idmember, position) ;
 			}
 		} else {
 			Toast.makeText(getActivity().getApplicationContext(), "Not connected network", Toast.LENGTH_SHORT).show();
@@ -153,13 +173,61 @@ public class TabMember extends Fragment implements OnClickListener{
 		}
 	}
 	
-	public String listMember () {
+	public void inviteMember(String iduser, String position) {
+		if(Utils.isConnectNetwork(getActivity())) {
+			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+				new asyncInviteMember().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, iduser, position);
+			} else {
+				new asyncInviteMember().execute(iduser, position) ;
+			}
+		} else {
+			Toast.makeText(getActivity().getApplicationContext(), "Not connected network", Toast.LENGTH_SHORT).show();
+		}
+	}
+	
+	public String inviteMemberInBackground (String iduser) {
+		// iduser : duoc moi
+		// iduserinvite : moi
+		String url = Const.DOMAIN_NAME + EVENT_SENDINVITE;
+		HttpResponse response = null;
+		
+		try {
+			ArrayList<String[]> values = new ArrayList<String[]>();
+			values.add(new String[] {"idevent", idevent});
+			values.add(new String[] {"iduser", iduser});
+			values.add(new String[] {"iduserinvite", Const.iduser});
+			response = conn.sendRequestPost(url, null, values);
+			String result = EntityUtils.toString(response.getEntity());
+			System.out.println("INVITE RESULT : " + result);
+			return result;
+		} catch (ClientProtocolException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return "FALSE PROTOCOL";
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return "FALSE IO";
+		} finally {
+			dialog.closeProgressDialog();
+			if(response != null)
+				try {
+					response.getEntity().consumeContent();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+		}
+	}
+	
+	public String listMember (String type) {
 		String url = Const.DOMAIN_NAME + EVENT_LISTMEMBER;
 		HttpResponse response = null;
 		
 		try {
 			ArrayList<String[]> values = new ArrayList<String[]>();
 			values.add(new String[] {"idevent", idevent});
+			values.add(new String[] {"type", type});
 			response = conn.sendRequestGet(url, null, values);
 			String result = EntityUtils.toString(response.getEntity());
 			System.out.println("LISTMEMBER RESULT : " + result);
@@ -184,16 +252,29 @@ public class TabMember extends Fragment implements OnClickListener{
 		}
 	}
 	
-	public void changeDataListMemberIfNeed (String result) {
+	
+	
+	public void changeDataListMemberIfNeed (String result, boolean ismember) {
 		try {
 			JSONObject jso_parent = new JSONObject(result);
 			JSONArray jsa_listmember = jso_parent.getJSONArray("listmember");
-			listmember.clear();
-			for(int i = 0; i < jsa_listmember.length(); i++) {
-				JSONObject jso = jsa_listmember.getJSONObject(i);
-				listmember.add(new MemberObject(jso.getString("idmember"), jso.getString("iduser"), jso.getString("name")));
+			if(ismember) {
+				listmember.clear();
+				for(int i = 0; i < jsa_listmember.length(); i++) {
+					JSONObject jso = jsa_listmember.getJSONObject(i);
+					listmember.add(new MemberObject(jso.getString("idmember"), jso.getString("iduser"), jso.getString("name")));
+				}
+				listMemberAdapter.notifyDataSetChanged();
+			} else {
+				listnotmember.clear();
+				for(int i = 0; i < jsa_listmember.length(); i++) {
+					JSONObject jso = jsa_listmember.getJSONObject(i);
+					listnotmember.add(new MemberObject("0", jso.getString("iduser"), jso.getString("name")));
+				}
+				listnotmemberAdapter.notifyDataSetChanged();
+				inviteMemberDialog.dialog.show();
+//				new InviteMember(this);
 			}
-			listMemberAdapter.notifyDataSetChanged();
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -203,6 +284,8 @@ public class TabMember extends Fragment implements OnClickListener{
 	
 	private class asyncSendNotify extends AsyncTask<String, Void, String> {
 
+		String pos = "";
+		
 		@Override
 		protected void onPreExecute() {
 			// TODO Auto-generated method stub
@@ -213,6 +296,7 @@ public class TabMember extends Fragment implements OnClickListener{
 		@Override
 		protected String doInBackground(String... params) {
 			// TODO Auto-generated method stub
+			pos = params[1];
 			return sendNotifyInBackgroud(params[0]);
 		}
 		
@@ -223,6 +307,14 @@ public class TabMember extends Fragment implements OnClickListener{
 			dialog.closeProgressDialog();
 			if(result.equals("true")) {
 				Toast.makeText(getActivity().getApplicationContext(), "Send Success", Toast.LENGTH_SHORT).show();
+				try {
+					int position = Integer.parseInt(pos);
+					listmember.get(position).isVisible = false;
+//					listMemberAdapter.getView(position, null, null);
+//					lv_member.setAdapter(listMemberAdapter);
+					listMemberAdapter.notifyDataSetChanged();
+//					lv_member.refreshDrawableState();
+				} catch (Exception e){}
 			} else {
 				Toast.makeText(getActivity().getApplicationContext(), "Try Again !", Toast.LENGTH_SHORT).show();
 			}
@@ -231,6 +323,8 @@ public class TabMember extends Fragment implements OnClickListener{
 	
 	private class asyncListmember extends AsyncTask<String, Void, String> {
 
+		private boolean ismember = false;
+		
 		@Override
 		protected void onPreExecute() {
 			// TODO Auto-generated method stub
@@ -241,7 +335,9 @@ public class TabMember extends Fragment implements OnClickListener{
 		@Override
 		protected String doInBackground(String... params) {
 			// TODO Auto-generated method stub
-			return listMember();
+			if(params[0].equals("member"))
+				ismember = true;
+			return listMember(params[0]);
 		}
 		
 		@Override
@@ -249,8 +345,49 @@ public class TabMember extends Fragment implements OnClickListener{
 			// TODO Auto-generated method stub
 			super.onPostExecute(result);
 			dialog.closeProgressDialog();
-			changeDataListMemberIfNeed(result);
+			changeDataListMemberIfNeed(result, ismember);
+		}
+	}
+
+	private class asyncInviteMember extends AsyncTask<String, Void, String> {
+
+		String pos;
+		
+		@Override
+		protected void onPreExecute() {
+			// TODO Auto-generated method stub
+			super.onPreExecute();
+			dialog.showProgressDialog();
 		}
 		
+		@Override
+		protected String doInBackground(String... params) {
+			// TODO Auto-generated method stub
+			pos = params[1];
+			return inviteMemberInBackground(params[0]);
+		}
+		
+		@Override
+		protected void onPostExecute(String result) {
+			// TODO Auto-generated method stub
+			super.onPostExecute(result);
+			dialog.closeProgressDialog();
+			if(result.equals("true")) {
+				Toast.makeText(getActivity().getApplicationContext(), "Send Success", Toast.LENGTH_SHORT).show();
+				try {
+					int position = Integer.parseInt(pos);
+					listnotmember.get(position).isVisible = false;
+//					listMemberAdapter.getView(position, null, null);
+//					inviteMemberDialog.lv_invite.setAdapter(listMemberAdapter);
+					listnotmemberAdapter.notifyDataSetChanged();
+//					lv_member.refreshDrawableState();
+				} catch (Exception e){}
+			} else {
+				Toast.makeText(getActivity().getApplicationContext(), "Try Again !", Toast.LENGTH_SHORT).show();
+			}
+		}
 	}
+	
+	
+	
 }

@@ -7,6 +7,9 @@ import dhbk.meetup.mobile.R;
 import dhbk.meetup.mobile.event.TabMember;
 import dhbk.meetup.mobile.event.object.MemberObject;
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.LightingColorFilter;
+import android.graphics.PorterDuff.Mode;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -30,6 +33,8 @@ public class ListMemberAdapter extends ArrayAdapter<MemberObject>{
 	@Override
 	public View getView(final int position, View convertView, ViewGroup parent) {
 		// TODO Auto-generated method stub
+		
+		
 		View v = tabmember.getActivity().getLayoutInflater().inflate(R.layout.listmember_item, null, true);
 		
 		TextView tv_name = (TextView) v.findViewById(R.id.memberitem_tv_name);
@@ -40,10 +45,16 @@ public class ListMemberAdapter extends ArrayAdapter<MemberObject>{
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
-				tabmember.sendNotify(listmember.get(position).idmember);
+				if(listmember.get(position).isVisible)
+					tabmember.sendNotify(listmember.get(position).idmember, String.valueOf(position));
 				System.out.println("ADAPTER : " + listmember.get(position).idmember);
 			}
 		});
+		if(!listmember.get(position).isVisible) {
+			btn_sendnotify.setBackgroundColor(tabmember.getResources().getColor(R.color.dark_grey));
+//			btn_sendnotify.setText("THOI");
+			System.out.println("DA SET");
+		}
 		
 		return v;
 	}

@@ -139,7 +139,7 @@ public class TabChat extends Fragment implements OnClickListener{
 		// TODO Auto-generated method stub
 		switch(v.getId()) {
 		case R.id.tabchat_imgbtn_send :
-			if(tv_message.getText().toString().equals("")) {
+			if(ed_message.getText().toString().equals("")) {
 				
 			} else {
 				if(Utils.isConnectNetwork(getActivity())) {
@@ -173,6 +173,7 @@ public class TabChat extends Fragment implements OnClickListener{
 			response = connPost.sendRequestPost(url, null, values);
 			
 			String result = EntityUtils.toString(response.getEntity());
+			System.out.println("RES POST CHAT : " + result);
 			return result;
 		} catch (ClientProtocolException e) {
 			// TODO Auto-generated catch block
@@ -249,6 +250,7 @@ public class TabChat extends Fragment implements OnClickListener{
 			// TODO Auto-generated method stub
 			super.onPostExecute(result);
 //			dialog.closeProgressDialog();
+			System.out.println("POST CHAT : " + result);
 			if(result.equals("true")) {
 				// set textview
 				String message = Const.username + " : " + ed_message.getText().toString() + "\n";
@@ -300,10 +302,10 @@ public class TabChat extends Fragment implements OnClickListener{
 					tv_message.append(span);
 					listMessage.add(new String[] {user, content});
 					
-					if(isFirst.get()) {
-						isFirst.set(false);
-						status = "live";
-					}
+				}
+				if(isFirst.get()) {
+					isFirst.set(false);
+					status = "live";
 				}
 			} catch (JSONException e) {
 				// TODO Auto-generated catch block

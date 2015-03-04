@@ -20,6 +20,12 @@
 	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content"
 	        android:src="@drawable/add" />
+        
+        <ImageButton 
+	        android:id="@+id/homepage_imgbtn_listinvite"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:src="@drawable/listinvite" />
 	    
 	    <ImageButton 
 	        android:id="@+id/homepage_imgbtn_filter"

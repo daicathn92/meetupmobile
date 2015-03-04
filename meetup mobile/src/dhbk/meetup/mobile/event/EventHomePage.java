@@ -35,7 +35,10 @@ import android.widget.PopupMenu.OnMenuItemClickListener;
 import android.widget.Toast;
 import dhbk.meetup.mobile.R;
 import dhbk.meetup.mobile.event.adapter.ListEventAdapter;
+import dhbk.meetup.mobile.event.adapter.ListInviteAdapter;
+import dhbk.meetup.mobile.event.member.BeInvite;
 import dhbk.meetup.mobile.event.object.EventObject;
+import dhbk.meetup.mobile.event.object.InviteObject;
 import dhbk.meetup.mobile.event.service.NewsService;
 import dhbk.meetup.mobile.httpconnect.HttpConnect;
 import dhbk.meetup.mobile.login.Login;
@@ -45,8 +48,12 @@ import dhbk.meetup.mobile.utils.Utils;
 
 public class EventHomePage extends Activity implements OnClickListener, OnMenuItemClickListener{
 
+	public static final int REQUESTCODE_TABHOME = 100;
 	public static final int TIME_UPDATE = 5000;
 	public static final String EVENT_LISTEVENT = "listevent";
+	public static final String EVENT_LISTEVENTREGISTERED = "listeventregistered";
+	public static final String EVENT_LISTINVITE = "listinvite";
+	public static final String EVENT_ADDMEMBER = "addmember";
 	
 	public static final int MENU_SIGNOUT = Menu.FIRST; 
 	
@@ -55,6 +62,7 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 	private ListEventAdapter listeventAdapter;
 	private ArrayList<EventObject> listevent = new ArrayList<EventObject>();
 	private ArrayList<EventObject> listeventupdate;
+	private ArrayList<String> listteventregistred = new ArrayList<String>();
 	
 	private Handler handler_updateEvent;
 	private Runnable update = new Runnable() {
@@ -77,6 +85,10 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 	private DialogWaiting dialog;
 	private PopupMenu popupMenu;
 	private AtomicBoolean isFilter = new AtomicBoolean(false);
+	
+	public ListInviteAdapter listinviteAdapter;
+	public ArrayList<InviteObject> listinvite = new ArrayList<InviteObject>();
+	public BeInvite beInvite;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -103,8 +115,20 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 							int arg2, long arg3) {
 						// TODO Auto-generated method stub
 						Intent it = new Intent(EventHomePage.this, AEvent.class);
-						it.putExtra("idevent", listevent.get(arg2).idevent);
-						startActivity(it);
+						String idevent_ = listevent.get(arg2).idevent;
+						it.putExtra("idevent", idevent_);
+						boolean b = false;
+						for(String str : listteventregistred) {
+							System.out.println("IDEVENT REGISTRED : " + str);
+							if(idevent_.equals(str)) {
+								b = true;
+								break;
+							}
+						}
+						it.putExtra("ismember", b);
+						it.putExtra("iduser", "none");
+						it.putExtra("idusercreate", listevent.get(arg2).idown);
+						startActivityForResult(it, REQUESTCODE_TABHOME);
 					}
 		});
 		
@@ -112,16 +136,22 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 		imgbtn_createevent.setOnClickListener(this);
 		final ImageButton imgbtn_filter = (ImageButton) findViewById(R.id.homepage_imgbtn_filter);
 		imgbtn_filter.setOnClickListener(this);
+		ImageButton imgbtn_listinvite = (ImageButton) findViewById(R.id.homepage_imgbtn_listinvite);
+		imgbtn_listinvite.setOnClickListener(this);
 		popupMenu = new PopupMenu(this, imgbtn_filter);
 		popupMenu.setOnMenuItemClickListener(this);
 		popupMenu.getMenuInflater().inflate(R.menu.menufilter, popupMenu.getMenu());
 		
+		// dialog list invite
+		listinviteAdapter = new ListInviteAdapter(this, listinvite);
+		beInvite = new BeInvite(this);
+		
 		// load new news
 		if(Utils.isConnectNetwork(EventHomePage.this)) {
 			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-				new asyncUpdateEvent().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "all");
+				new asyncListEventRegistered().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 			} else {
-				new asyncUpdateEvent().execute("all");
+				new asyncListEventRegistered().execute();
 			}
 		} else {
 			Toast.makeText(getApplicationContext(), "Network not connected", Toast.LENGTH_SHORT).show();
@@ -150,6 +180,32 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 	}
 	
 	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		// TODO Auto-generated method stub
+		super.onActivityResult(requestCode, resultCode, data);
+		System.out.println("RESULT FOR ACTIVITY OK 2");
+		if(requestCode == REQUESTCODE_TABHOME) {
+			System.out.println("RESULT FOR ACTIVITY OK 1");
+			if(resultCode == RESULT_OK) {
+				try {
+					System.out.println("RESULT FOR ACTIVITY OK");
+					String idevent_ = data.getExtras().getString("idevent");
+					String idusercreate_ = data.getExtras().getString("idusercreate");
+					listteventregistred.add(idevent_);
+					
+					Intent it = new Intent(EventHomePage.this, AEvent.class);
+					it.putExtra("idevent", idevent_);
+					it.putExtra("ismember", true);
+					it.putExtra("iduser", "none");
+					it.putExtra("idusercreate", idusercreate_);
+					startActivityForResult(it, REQUESTCODE_TABHOME);
+					System.out.println("START ACTIVITY OK");
+				} catch (Exception e) {}
+			}
+		}
+	}
+	
+	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// TODO Auto-generated method stub
 		switch(item.getItemId()) {
@@ -174,6 +230,17 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 	public void onClick(View v) {
 		// TODO Auto-generated method stub
 		switch(v.getId()) {
+		case R.id.homepage_imgbtn_listinvite :
+			if(Utils.isConnectNetwork(EventHomePage.this)) {
+				if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+					new asyncListInvite().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+				} else {
+					new asyncListInvite().execute() ;
+				}
+			} else {
+				Toast.makeText(getApplicationContext(), "Not connected network", Toast.LENGTH_SHORT).show();
+			}
+			break;
 		case R.id.homepage_imgbtn_createevent :
 			Intent it = new Intent(getApplicationContext(), CreateEvent.class);
 			startActivity(it);
@@ -255,6 +322,116 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 		
 	}
 	
+	public String listeventregistered () {
+		String url = Const.DOMAIN_NAME + EVENT_LISTEVENTREGISTERED;
+		HttpResponse response = null;
+		try {
+			ArrayList<String[]> values = new ArrayList<String[]>();
+			values.add(new String[] {"iduser", Const.iduser});
+			response = conn.sendRequestGet(url, null, values);
+			String result = EntityUtils.toString(response.getEntity());
+			return result;
+		} catch (ClientProtocolException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return "FALSE PROTOCOL";
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return "FALSE IO";
+		}  finally {
+			dialog.closeProgressDialog();
+			if(response != null) {
+				try {
+					response.getEntity().consumeContent();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	public String listInvite () {
+		String url = Const.DOMAIN_NAME + EVENT_LISTINVITE;
+		HttpResponse response = null;
+		
+		try {
+			ArrayList<String[]> values = new ArrayList<String[]>();
+			values.add(new String[] {"iduser", Const.iduser});
+			values.add(new String[] {"type", "all"});
+			response = conn.sendRequestGet(url, null, values);
+			String result = EntityUtils.toString(response.getEntity());
+			System.out.println("RESULT BE INVITE : " + result);
+			return result;
+		} catch (ClientProtocolException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return "FALSE BE INVITE PROTOCOL";
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return "FALSE BE INVITE IO";
+		} finally {
+			dialog.closeProgressDialog(); 
+			if(response != null) {
+				try {
+					response.getEntity().consumeContent();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	public void acceptInvite (String position) {
+		if(Utils.isConnectNetwork(EventHomePage.this)) {
+			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+				new asyncAccept().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, position);
+			} else {
+				new asyncAccept().execute(position);
+			}
+		} else {
+			Toast.makeText(getApplicationContext(), "Network not connected", Toast.LENGTH_SHORT).show();
+		}
+	}
+	
+	public String acceptInviteInBackgroud (String pos) {
+		String url = Const.DOMAIN_NAME + EVENT_ADDMEMBER;
+		HttpResponse response = null;
+		
+		try {
+			int position = Integer.parseInt(pos);
+			ArrayList<String[]> values = new ArrayList<String[]>();
+			values.add(new String[] {"iduser", Const.iduser});
+			values.add(new String[] {"idevent", listinvite.get(position).idevent});
+			values.add(new String[] {"idinvite", listinvite.get(position).idinvite});
+			response = conn.sendRequestPost(url, null, values);
+			String result = EntityUtils.toString(response.getEntity());
+			System.out.println("RESULT ACCEPT INVITE : " + result);
+			return result;
+		} catch (ClientProtocolException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return "FALSE ACCEPT INVITE PROTOCOL";
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return "FALSE ACCEPT INVITE IO";
+		} finally {
+			dialog.closeProgressDialog(); 
+			if(response != null) {
+				try {
+					response.getEntity().consumeContent();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
 	public void changeDataIfNeed (boolean isChange) {
 		if(isChange) {
 			listevent.clear();
@@ -303,5 +480,126 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 //			handler_updateEvent.postDelayed(update, TIME_UPDATE);
 		};
 	}
+	
+	// lay danh sach su kien da dang ki tham gia
+	private class asyncListEventRegistered extends AsyncTask<String, Void, String> {
 
+		@Override
+		protected void onPreExecute() {
+			// TODO Auto-generated method stub
+			super.onPreExecute();
+			dialog.showProgressDialog();
+		}
+		
+		@Override
+		protected String doInBackground(String... arg0) {
+			// TODO Auto-generated method stub
+			return listeventregistered();
+		}
+		
+		@Override
+		protected void onPostExecute(String result) {
+			// TODO Auto-generated method stub
+			super.onPostExecute(result);
+			dialog.closeProgressDialog();
+			
+			try {
+				JSONObject jso_parent = new JSONObject(result);
+				JSONArray jsa_listevent = jso_parent.getJSONArray("listevent");
+				for(int i = 0; i < jsa_listevent.length(); i++) {
+					JSONObject jso = jsa_listevent.getJSONObject(i);
+					listteventregistred.add(jso.getString("idevent"));
+				}
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			// load new news event when finish load listeventregistered
+			if(Utils.isConnectNetwork(EventHomePage.this)) {
+				if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+					new asyncUpdateEvent().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "all");
+				} else {
+					new asyncUpdateEvent().execute("all");
+				}
+			} 
+		}
+		
+	}
+	
+	private class asyncListInvite extends AsyncTask<String, Void, String> {
+
+		@Override
+		protected void onPreExecute() {
+			// TODO Auto-generated method stub
+			super.onPreExecute();
+			dialog.showProgressDialog();
+		}
+		
+		@Override
+		protected String doInBackground(String... params) {
+			// TODO Auto-generated method stub
+			return listInvite();
+		}
+		
+		@Override
+		protected void onPostExecute(String result) {
+			// TODO Auto-generated method stub
+			super.onPostExecute(result);
+			dialog.closeProgressDialog();
+			try {
+				JSONObject jso_parent = new JSONObject(result);
+				JSONArray jsa_listinvite = jso_parent.getJSONArray("listinvite");
+				listinvite.clear();
+				for(int i = 0; i < jsa_listinvite.length(); i++) {
+					JSONObject jso = jsa_listinvite.getJSONObject(i);
+					listinvite.add(new InviteObject(jso.getString("idinvite"), jso.getString("idevent"),
+							jso.getString("name"), jso.getString("title")));
+				}
+				listinviteAdapter.notifyDataSetChanged();
+				beInvite.dialog.show();
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private class asyncAccept extends AsyncTask<String, Void, String> {
+
+		String pos;
+		
+		@Override
+		protected void onPreExecute() {
+			// TODO Auto-generated method stub
+			super.onPreExecute();
+			dialog.showProgressDialog();
+		}
+		
+		@Override
+		protected String doInBackground(String... params) {
+			// TODO Auto-generated method stub
+			pos = params[0];
+			return acceptInviteInBackgroud(pos);
+		}
+		
+		@Override
+		protected void onPostExecute(String result) {
+			// TODO Auto-generated method stub
+			super.onPostExecute(result);
+			dialog.closeProgressDialog();
+			if(result.equals("true")) {
+				Toast.makeText(getApplicationContext(), "Success", Toast.LENGTH_SHORT).show();
+				try {
+					int position = Integer.parseInt(pos);
+					listteventregistred.add(listinvite.get(position).idevent);
+					listinvite.get(position).isVisible = false;
+					listinviteAdapter.notifyDataSetChanged();
+				} catch (Exception e){}
+			} else {
+				Toast.makeText(getApplicationContext(), "Try Again !", Toast.LENGTH_SHORT).show();
+			}
+		}
+		
+	}
 }

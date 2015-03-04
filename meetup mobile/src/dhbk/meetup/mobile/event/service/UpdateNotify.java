@@ -10,15 +10,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import dhbk.meetup.mobile.event.notify.Notifications;
-import dhbk.meetup.mobile.httpconnect.HttpConnect;
-import dhbk.meetup.mobile.utils.Const;
 import android.os.AsyncTask;
-import android.text.style.ReplacementSpan;
+import dhbk.meetup.mobile.event.notify.Notifications;
+import dhbk.meetup.mobile.utils.Const;
 
 public class UpdateNotify extends AsyncTask<String, Void, String>{
 
-	public static final String EVENT_GETNOTIFY = "listnotify";
+	
 	private NewsService newsService;
 	
 	public UpdateNotify(NewsService newsService) {
@@ -27,7 +25,7 @@ public class UpdateNotify extends AsyncTask<String, Void, String>{
 	}
 	
 	private String updateNotify () {
-		String url = Const.DOMAIN_NAME + EVENT_GETNOTIFY;
+		String url = Const.DOMAIN_NAME + NewsService.EVENT_GETNOTIFY;
 		HttpResponse response = null;
 		
 		try {
@@ -36,7 +34,7 @@ public class UpdateNotify extends AsyncTask<String, Void, String>{
 			System.out.println("IDUSER : " + newsService.iduser);
 			response = newsService.connNotify.sendRequestGet(url, null, values);
 			String result = EntityUtils.toString(response.getEntity());
-			System.out.println("RESULT NOTIFY : " + result);
+//			System.out.println("RESULT NOTIFY : " + result);
 			return result;
 		} catch (ClientProtocolException e) {
 			// TODO Auto-generated catch block
@@ -73,13 +71,13 @@ public class UpdateNotify extends AsyncTask<String, Void, String>{
 			JSONArray jsa_listnotify = jso_parent.getJSONArray("listnotify");
 			for(int i =0; i < jsa_listnotify.length(); i++) {
 				JSONObject jso = jsa_listnotify.getJSONObject(i);
-				new Notifications(jso.getString("idevent"), "Nhac nho", jso.getString("name") + "nhac ban den cuoc gap " + jso.getString("title"), newsService.getApplicationContext()).showNotify();
+				new Notifications(newsService.iduser, jso.getString("iduser"), jso.getString("idevent"), "Meetup Notify", jso.getString("name") + " nhac ban den cuoc gap " + jso.getString("title"), true, newsService.getApplicationContext()).showNotify();
 			}
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		newsService.handlerNotify.postDelayed(newsService.getlistNotify, 10000);
+		newsService.handlerNotify.postDelayed(newsService.getlistNotify, NewsService.TIME_REPOST_CONNECT);
 	}
 
 }

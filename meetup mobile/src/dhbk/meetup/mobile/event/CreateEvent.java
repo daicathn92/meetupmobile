@@ -217,6 +217,9 @@ public class CreateEvent extends Activity implements OnClickListener, OnDateSetL
 					int res = Integer.parseInt(result);
 					Intent it = new Intent(getApplicationContext(), AEvent.class);
 					it.putExtra("idevent", res);
+					it.putExtra("ismember", true);
+					it.putExtra("iduser", "none");
+					it.putExtra("idusercreate", Const.iduser);
 					startActivity(it);
 					finish();
 				} catch(Exception e) {
