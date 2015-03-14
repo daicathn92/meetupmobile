@@ -1,0 +1,38 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/mainLayout"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".ListViewAnimations" >
+
+    <LinearLayout 
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:layout_marginBottom="5dp"
+        android:orientation="horizontal" >
+        
+	    <ImageButton
+	        android:id="@+id/event_link_imgbtn_add"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:src="@drawable/add" />
+	    
+	    <ImageButton
+	        android:id="@+id/event_link_imgbtn_export"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:src="@drawable/export" />
+        
+    </LinearLayout>
+    
+    
+    <dhbk.meetup.mobile.event.adapter.DynamicListView
+        android:id="@+id/event_link_lv"
+		android:background="#0000"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content" 
+		android:dividerHeight="5dp"/>
+
+</LinearLayout>

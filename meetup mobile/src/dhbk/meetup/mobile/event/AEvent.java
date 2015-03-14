@@ -32,6 +32,8 @@ public class AEvent extends FragmentActivity implements OnTabChangeListener, OnP
 	private boolean ismember = false;
 	private String idusercreate = "-1", iduser;
 	
+	public TabHome th ;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
@@ -110,7 +112,7 @@ public class AEvent extends FragmentActivity implements OnTabChangeListener, OnP
 	public ArrayList<Fragment> getListFragments () {
 		ArrayList<Fragment> list = new ArrayList<Fragment>();
 		
-		TabHome th = new TabHome();
+		th = new TabHome();
 		th.setIdevent(idevent);
 		th.setIsmember(ismember);
 		th.setIdusercreate(idusercreate);

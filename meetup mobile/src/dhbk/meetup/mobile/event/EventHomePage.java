@@ -46,6 +46,7 @@ import dhbk.meetup.mobile.utils.Const;
 import dhbk.meetup.mobile.utils.DialogWaiting;
 import dhbk.meetup.mobile.utils.Utils;
 
+@SuppressLint("NewApi")
 public class EventHomePage extends Activity implements OnClickListener, OnMenuItemClickListener{
 
 	public static final int REQUESTCODE_TABHOME = 100;
@@ -90,6 +91,7 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 	public ArrayList<InviteObject> listinvite = new ArrayList<InviteObject>();
 	public BeInvite beInvite;
 	
+	@SuppressLint("NewApi")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
@@ -226,6 +228,7 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 		}
 	}
 	
+	@SuppressLint("NewApi")
 	@Override
 	public void onClick(View v) {
 		// TODO Auto-generated method stub
@@ -252,6 +255,7 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 		}
 	}
 	
+	@SuppressLint("NewApi")
 	@Override
 	public boolean onMenuItemClick(MenuItem item) {
 		// TODO Auto-generated method stub
@@ -385,6 +389,7 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 		}
 	}
 	
+	@SuppressLint("NewApi")
 	public void acceptInvite (String position) {
 		if(Utils.isConnectNetwork(EventHomePage.this)) {
 			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
@@ -446,12 +451,12 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 	}
 	
 	public ArrayList<EventObject> listeventFromJson (JSONObject jso_parent) throws JSONException {
-		System.out.println("LISTEVENT JSON : " + jso_parent.toString());
+//		System.out.println("LISTEVENT JSON : " + jso_parent.toString());
 		ArrayList<EventObject> arr = new ArrayList<EventObject>();
 		JSONArray jsa_listevent = jso_parent.getJSONArray("listevent");
 		for(int i = 0; i < jsa_listevent.length(); i++) {
 			JSONObject jso = jsa_listevent.getJSONObject(i);
-			arr.add(new EventObject(jso.getString("title"), jso.getString("name"), jso.getString("place"), jso.getString("time"),
+			arr.add(new EventObject(jso.getString("title"), jso.getString("name"), jso.getString("place").split(";")[0], jso.getString("time"),
 							jso.getString("description"), jso.getString("idevent"), jso.getString("iduser")));
 		}
 		return arr;
@@ -497,6 +502,7 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 			return listeventregistered();
 		}
 		
+		@SuppressLint("NewApi")
 		@Override
 		protected void onPostExecute(String result) {
 			// TODO Auto-generated method stub

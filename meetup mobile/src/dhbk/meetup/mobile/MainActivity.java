@@ -18,6 +18,7 @@ public class MainActivity extends Activity implements OnTouchListener{
 		setContentView(R.layout.activity_main);
 		LinearLayout layout_main = (LinearLayout) findViewById(R.id.layout_main);
 		layout_main.setOnTouchListener(this);
+//		Goo
 	}
 
 	@Override

@@ -10,10 +10,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.R.id;
+import android.annotation.SuppressLint;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,6 +30,8 @@ import android.widget.Toast;
 import dhbk.meetup.mobile.R;
 import dhbk.meetup.mobile.event.adapter.ListMemberAdapter;
 import dhbk.meetup.mobile.event.adapter.ListNotMemberAdapter;
+import dhbk.meetup.mobile.event.googlemap.PlaceEvent;
+import dhbk.meetup.mobile.event.googlemap.TrackGPS;
 import dhbk.meetup.mobile.event.member.InviteMember;
 import dhbk.meetup.mobile.event.object.MemberObject;
 import dhbk.meetup.mobile.httpconnect.HttpConnect;
@@ -34,6 +41,7 @@ import dhbk.meetup.mobile.utils.Utils;
 
 public class TabMember extends Fragment implements OnClickListener{
 
+	public static final int REQUESTCODE_SETTINGS_LOCATION = 100;
 	public static final String EVENT_SENDNOTIFY = "sendnotify";
 	public static final String EVENT_LISTMEMBER = "listmember";
 	public static final String EVENT_SENDINVITE = "sendinvite";
@@ -50,6 +58,8 @@ public class TabMember extends Fragment implements OnClickListener{
 	
 	ListView lv_member;
 	
+	public LocationManager locationManager;
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
@@ -57,12 +67,14 @@ public class TabMember extends Fragment implements OnClickListener{
 		System.out.println("ONCREATE TABMEMBER");
 		conn = new HttpConnect();
 		dialog = new DialogWaiting(getActivity());
+		locationManager = (LocationManager) getActivity().getSystemService(getActivity().LOCATION_SERVICE);
 		
 		listMemberAdapter = new ListMemberAdapter(TabMember.this, listmember);
 		listnotmemberAdapter = new ListNotMemberAdapter(this, listnotmember);
 		inviteMemberDialog = new InviteMember(this);
 	}
 	
+	@SuppressLint("NewApi")
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
@@ -90,6 +102,26 @@ public class TabMember extends Fragment implements OnClickListener{
 	}
 	
 	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		// TODO Auto-generated method stub
+		super.onActivityResult(requestCode, resultCode, data);
+		
+		// result from setting location
+		if(requestCode == REQUESTCODE_SETTINGS_LOCATION) {
+			if(resultCode == getActivity().RESULT_OK) {
+				if(Utils.isGPSEnable(locationManager)) {
+					Intent it = new Intent(getActivity().getApplicationContext(), TrackGPS.class);
+					it.putExtra("lat", ((AEvent)getActivity()).th.lat);
+					it.putExtra("lng", ((AEvent)getActivity()).th.lng);
+					it.putExtra("place", ((AEvent)getActivity()).th.tv_place.getText().toString());
+					it.putExtra("listid", listIduserWithJson());
+					startActivity(it);
+				}
+			}
+		}
+	}
+	
+	@Override
 	public void onPause() {
 	// TODO Auto-generated method stub
 		super.onPause();
@@ -103,6 +135,7 @@ public class TabMember extends Fragment implements OnClickListener{
 		System.out.println("ONDESTROY TABMEMBER");
 	}
 	
+	@SuppressLint("NewApi")
 	@Override
 	public void onClick(View v) {
 		// TODO Auto-generated method stub
@@ -119,7 +152,27 @@ public class TabMember extends Fragment implements OnClickListener{
 			}
 			break;
 		case R.id.tabmember_imgbtn_track :
-			
+			if(Utils.isGPSEnable(locationManager)) {
+				Intent it = new Intent(getActivity().getApplicationContext(), TrackGPS.class);
+				it.putExtra("lat", ((AEvent)getActivity()).th.lat);
+				it.putExtra("lng", ((AEvent)getActivity()).th.lng);
+				it.putExtra("place", ((AEvent)getActivity()).th.tv_place.getText().toString());
+				it.putExtra("listid", listIduserWithJson());
+				startActivity(it);
+			} else {
+				new AlertDialog.Builder(getActivity())
+    			.setTitle("GPS")
+    			.setMessage("Enable GPS")
+    			.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						// TODO Auto-generated method stub
+						Intent itGPS = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+				        startActivityForResult(itGPS, REQUESTCODE_SETTINGS_LOCATION);
+					}
+    			})
+    			.show();
+			}
 			break;
 		default : break;
 		}
@@ -129,6 +182,7 @@ public class TabMember extends Fragment implements OnClickListener{
 		this.idevent = idevent;
 	}
 	
+	@SuppressLint("NewApi")
 	public void sendNotify (String idmember, String position) {
 		if(Utils.isConnectNetwork(getActivity())) {
 			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
@@ -173,6 +227,7 @@ public class TabMember extends Fragment implements OnClickListener{
 		}
 	}
 	
+	@SuppressLint("NewApi")
 	public void inviteMember(String iduser, String position) {
 		if(Utils.isConnectNetwork(getActivity())) {
 			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
@@ -252,7 +307,18 @@ public class TabMember extends Fragment implements OnClickListener{
 		}
 	}
 	
-	
+	// get list iduser format Json
+	public String listIduserWithJson () {
+		JSONObject jso = new JSONObject();
+		JSONArray jsa = new JSONArray();
+		for(MemberObject mem: listmember) {
+			jsa.put(mem.iduser);
+		}
+		try {
+			jso.put("listid", jsa);
+		} catch (JSONException e) { }
+		return jso.toString();
+	}
 	
 	public void changeDataListMemberIfNeed (String result, boolean ismember) {
 		try {

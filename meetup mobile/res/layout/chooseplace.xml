@@ -1,25 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical" >
-
-    <EditText
-        android:id="@+id/chooseplace_ed_place"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="24sp"
-        android:background="@drawable/custom_et1"
-		android:lines="1">
-
-        <requestFocus />
-    </EditText>
+    android:layout_height="match_parent" >
 
     <Button
         android:id="@+id/chooseplace_btn_ok"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
+        android:layout_alignParentRight="true"
+        android:layout_marginLeft="5dp"
         android:text="OK" />
+	
+    <fragment
+		android:id="@+id/chooseplace_map"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:layout_below="@+id/chooseplace_btn_ok"
+		class="com.google.android.gms.maps.MapFragment" />
 
-</LinearLayout>
+    <EditText
+        android:id="@+id/chooseplace_ed_place"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/chooseplace_btn_ok"
+        android:layout_alignBottom="@+id/chooseplace_btn_ok"
+        android:layout_alignParentLeft="true"
+        android:layout_toLeftOf="@+id/chooseplace_btn_ok"
+        android:background="@drawable/custom_et1"
+        android:ems="10"
+        android:hint="Place meeting"
+        android:lines="1"
+        android:textSize="24sp" >
+
+        <requestFocus />
+    </EditText>
+
+</RelativeLayout>

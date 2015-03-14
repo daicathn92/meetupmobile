@@ -31,7 +31,7 @@ public class UpdateNotify extends AsyncTask<String, Void, String>{
 		try {
 			ArrayList<String[]> values = new ArrayList<String[]>();
 			values.add(new String[] {"iduser", newsService.iduser});
-			System.out.println("IDUSER : " + newsService.iduser);
+			System.out.println("IDUSER NOTIFY : " + newsService.iduser);
 			response = newsService.connNotify.sendRequestGet(url, null, values);
 			String result = EntityUtils.toString(response.getEntity());
 //			System.out.println("RESULT NOTIFY : " + result);

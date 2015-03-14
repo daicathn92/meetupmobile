@@ -10,14 +10,18 @@ import org.apache.http.util.EntityUtils;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.DatePickerDialog.OnDateSetListener;
 import android.app.TimePickerDialog;
 import android.app.TimePickerDialog.OnTimeSetListener;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -29,6 +33,7 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 import dhbk.meetup.mobile.R;
+import dhbk.meetup.mobile.event.googlemap.PlaceEvent;
 import dhbk.meetup.mobile.httpconnect.HttpConnect;
 import dhbk.meetup.mobile.utils.Const;
 import dhbk.meetup.mobile.utils.DialogWaiting;
@@ -36,7 +41,8 @@ import dhbk.meetup.mobile.utils.Utils;
 
 public class CreateEvent extends Activity implements OnClickListener, OnDateSetListener, OnTimeSetListener{
 
-	public static final int REQUESTCODE_PLACE = 1;
+	public static final int REQUESTCODE_PLACEEVENT = 1;
+	public static final int REQUESTCODE_SETTINGS_LOCATION = 10;
 	public static final String EVENT_CREATEEVENT = "createevent";
 	
 	private HttpConnect conn;
@@ -49,8 +55,13 @@ public class CreateEvent extends Activity implements OnClickListener, OnDateSetL
 	private DatePickerDialog datePicker;
 	private TimePickerDialog timePicker;
 	private Calendar calendar = null;
+	
+	public LocationManager locationManager;
+	public double lat = 1000, lng = 1000;
 //	private int year, month, day, hour, minute;
 //	private ;
+	
+	private boolean fromLinkEvent = false;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -58,8 +69,14 @@ public class CreateEvent extends Activity implements OnClickListener, OnDateSetL
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.createevent);
 		
+		Intent it = getIntent();
+		try {
+			fromLinkEvent = it.getExtras().getBoolean("fromLinkEvent");
+		} catch(Exception e) {}
+		
 		conn = new HttpConnect();
 		dialog = new DialogWaiting(CreateEvent.this);
+		locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 		
 		calendar = Calendar.getInstance();
 		
@@ -89,10 +106,31 @@ public class CreateEvent extends Activity implements OnClickListener, OnDateSetL
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		// TODO Auto-generated method stub
 		super.onActivityResult(requestCode, resultCode, data);
-		if(requestCode == REQUESTCODE_PLACE) {
+		
+		// result from setting location
+		if(requestCode == REQUESTCODE_SETTINGS_LOCATION) {
 			if(resultCode == RESULT_OK) {
-				String place = data.getExtras().getString("place");
-				tv_place.setText(place);
+				if(Utils.isGPSEnable(locationManager)) {
+					Intent it = new Intent(getApplicationContext(), PlaceEvent.class);
+					it.putExtra("onlyview", false);
+					it.putExtra("lat", lat);
+					it.putExtra("lng", lng);
+					it.putExtra("place", tv_place.getText().toString());
+					startActivityForResult(it, REQUESTCODE_PLACEEVENT);
+				}
+			}
+		}
+		
+		// result from activity place event
+		if(requestCode == REQUESTCODE_PLACEEVENT) {
+			if(resultCode == RESULT_OK) {
+				try {
+					tv_place.setText(data.getExtras().getString("place"));
+					lat = data.getExtras().getDouble("lat");
+					lng = data.getExtras().getDouble("lng");
+				} catch (Exception e) {
+					System.out.println("RESULT ERROR : " + e.getMessage());
+				}
 			}
 		}
 	}
@@ -114,8 +152,27 @@ public class CreateEvent extends Activity implements OnClickListener, OnDateSetL
 			}
 			break;
 		case R.id.create_imgbtn_place :
-			Intent it = new Intent(getApplicationContext(), PlaceEvent.class);
-			startActivityForResult(it, REQUESTCODE_PLACE);
+			if(Utils.isGPSEnable(locationManager)) {
+				Intent it = new Intent(getApplicationContext(), PlaceEvent.class);
+				it.putExtra("onlyview", false);
+				it.putExtra("lat", lat);
+				it.putExtra("lng", lng);
+				it.putExtra("place", tv_place.getText().toString());
+				startActivityForResult(it, REQUESTCODE_PLACEEVENT);
+			} else {
+				new AlertDialog.Builder(this)
+    			.setTitle("GPS")
+    			.setMessage("Enable GPS")
+    			.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						// TODO Auto-generated method stub
+						Intent itGPS = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+				        startActivityForResult(itGPS, REQUESTCODE_SETTINGS_LOCATION);
+					}
+    			})
+    			.show();
+			}
 			break;
 		case R.id.create_imgbtn_date :
 			showDatePickerDialog();
@@ -167,7 +224,7 @@ public class CreateEvent extends Activity implements OnClickListener, OnDateSetL
 			try {
 				ArrayList<String[]> values = new ArrayList<String[]>();
 				values.add(new String[] {"title", title});
-				values.add(new String[] {"place", place});
+				values.add(new String[] {"place", place + ";" + lat + ";" + lng});
 				values.add(new String[] {"description", content});
 				values.add(new String[] {"ispublic", isPublic});
 				values.add(new String[] {"iduser", Const.iduser});
@@ -215,13 +272,27 @@ public class CreateEvent extends Activity implements OnClickListener, OnDateSetL
 			} else {
 				try {
 					int res = Integer.parseInt(result);
-					Intent it = new Intent(getApplicationContext(), AEvent.class);
-					it.putExtra("idevent", res);
-					it.putExtra("ismember", true);
-					it.putExtra("iduser", "none");
-					it.putExtra("idusercreate", Const.iduser);
-					startActivity(it);
-					finish();
+					if(fromLinkEvent) {
+						System.out.println("RES : " + res);
+						Intent it = new Intent();
+						it.putExtra("title", ed_title.getText().toString());
+						it.putExtra("own", Const.username);
+						it.putExtra("place", tv_place.getText().toString());
+						it.putExtra("time", tv_time.getText().toString());
+						it.putExtra("content", ed_content.getText().toString());
+						it.putExtra("idevent", String.valueOf(res));
+						it.putExtra("idown", Const.iduser);
+						setResult(RESULT_OK, it);
+						finish();
+					} else {
+						Intent it = new Intent(getApplicationContext(), AEvent.class);
+						it.putExtra("idevent", res);
+						it.putExtra("ismember", true);
+						it.putExtra("iduser", "none");
+						it.putExtra("idusercreate", Const.iduser);
+						startActivity(it);
+						finish();
+					}
 				} catch(Exception e) {
 					Toast.makeText(getApplicationContext(), "Try again !", Toast.LENGTH_SHORT).show();
 				}

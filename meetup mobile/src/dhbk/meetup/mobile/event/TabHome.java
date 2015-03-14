@@ -11,10 +11,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.annotation.SuppressLint;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,6 +29,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import dhbk.meetup.mobile.R;
+import dhbk.meetup.mobile.event.googlemap.PlaceEvent;
 import dhbk.meetup.mobile.httpconnect.HttpConnect;
 import dhbk.meetup.mobile.utils.Const;
 import dhbk.meetup.mobile.utils.DialogWaiting;
@@ -33,6 +39,8 @@ public class TabHome extends Fragment implements OnClickListener{
 
 	public static final String EVENT_INFO = "infoevent";
 	public static final int REQUESTCODE_EDITEVENT = 10;
+	public static final int REQUESTCODE_SETTINGS_LOCATION = 100;
+	public static final int REQUESTCODE_PLACEEVENT = 1000;
 	
 	private HttpConnect conn;
 	private DialogWaiting dialog;
@@ -44,15 +52,20 @@ public class TabHome extends Fragment implements OnClickListener{
 	boolean ismember = false;
 	private String idusercreate;
 	
+	public LocationManager locationManager;
+	public double lat, lng;
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		conn = new HttpConnect();
 		dialog = new DialogWaiting(getActivity());
+		locationManager = (LocationManager) getActivity().getSystemService(getActivity().LOCATION_SERVICE);
 		System.out.println("ONCREATE TABHOME");
 	}
 	
+	@SuppressLint("NewApi")
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
@@ -112,10 +125,13 @@ public class TabHome extends Fragment implements OnClickListener{
 		System.out.println("ONDESTROY TABHOME");
 	}	
 	
+	@SuppressLint("NewApi")
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		// TODO Auto-generated method stub
 		super.onActivityResult(requestCode, resultCode, data);
+		
+		// result from activity edit event
 		if(requestCode == REQUESTCODE_EDITEVENT) {
 			if(resultCode == getActivity().RESULT_OK) {
 				if(Utils.isConnectNetwork(getActivity())) {
@@ -127,8 +143,24 @@ public class TabHome extends Fragment implements OnClickListener{
 				}
 			}
 		}
+		
+		// result from setting location
+		if(requestCode == REQUESTCODE_SETTINGS_LOCATION) {
+			if(resultCode == getActivity().RESULT_OK) {
+				if(Utils.isGPSEnable(locationManager)) {
+					Intent it = new Intent(getActivity().getApplicationContext(), PlaceEvent.class);
+					it.putExtra("onlyview", true);
+					it.putExtra("lat", lat);
+					it.putExtra("lng", lng);
+					it.putExtra("place", tv_place.getText().toString());
+					startActivityForResult(it, REQUESTCODE_PLACEEVENT);
+				}
+			}
+		}
+		
 	}
 	
+	@SuppressLint("NewApi")
 	@Override
 	public void onClick(View v) {
 		// TODO Auto-generated method stub
@@ -145,10 +177,32 @@ public class TabHome extends Fragment implements OnClickListener{
 			}
 			break;
 		case R.id.tabhome_imgbtn_place :
-			
+			if(Utils.isGPSEnable(locationManager)) {
+				Intent it = new Intent(getActivity().getApplicationContext(), PlaceEvent.class);
+				it.putExtra("onlyview", true);
+				it.putExtra("lat", lat);
+				it.putExtra("lng", lng);
+				it.putExtra("place", tv_place.getText().toString());
+				startActivityForResult(it, REQUESTCODE_PLACEEVENT);
+			} else {
+				new AlertDialog.Builder(getActivity())
+    			.setTitle("GPS")
+    			.setMessage("Enable GPS")
+    			.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						// TODO Auto-generated method stub
+						Intent itGPS = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+				        startActivityForResult(itGPS, REQUESTCODE_SETTINGS_LOCATION);
+					}
+    			})
+    			.show();
+			}
 			break;
 		case R.id.tabhome_imgbtn_nextpoint :
-			
+			Intent it_ = new Intent(getActivity().getApplicationContext(), EventLink.class);
+			it_.putExtra("idevent", idevent);
+			startActivity(it_);
 			break;
 		case R.id.tabhome_imgbtn_edit :
 			Intent it = new Intent(getActivity().getApplicationContext(), EditEvent.class);
@@ -161,6 +215,8 @@ public class TabHome extends Fragment implements OnClickListener{
 			it.putExtra("ispublic", ispublic);
 			it.putExtra("nextpoint", nextpoint);
 			it.putExtra("iduser", iduser);
+			it.putExtra("lat", lat);
+			it.putExtra("lng", lng);
 			startActivityForResult(it, REQUESTCODE_EDITEVENT);
 			break;
 		default : break;
@@ -269,7 +325,10 @@ public class TabHome extends Fragment implements OnClickListener{
 					tv_title.setText(jso.getString("title").toString());
 					tv_content.setText(jso.getString("description").toString());
 					tv_own.setText(jso.getString("name").toString());
-					tv_place.setText(jso.getString("place").toString());
+					String[] placefull = jso.getString("place").toString().split(";");
+					tv_place.setText(placefull[0]);
+					lat = Double.parseDouble(placefull[1]);
+					lng = Double.parseDouble(placefull[2]);
 					tv_time.setText(jso.getString("time").toString());
 					String ispublic_str = jso.getString("ispublic");
 					if(ispublic_str.equals("1"))
@@ -286,7 +345,7 @@ public class TabHome extends Fragment implements OnClickListener{
 		}
 	}
 	
-private class asyncJoinNow extends AsyncTask<String, Void, String> {
+	private class asyncJoinNow extends AsyncTask<String, Void, String> {
 		
 		@Override
 		protected void onPreExecute() {
