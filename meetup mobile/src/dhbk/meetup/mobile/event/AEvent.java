@@ -32,7 +32,7 @@ public class AEvent extends FragmentActivity implements OnTabChangeListener, OnP
 	private boolean ismember = false;
 	private String idusercreate = "-1", iduser;
 	
-	public TabHome th ;
+	public TabHome th;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -65,7 +65,7 @@ public class AEvent extends FragmentActivity implements OnTabChangeListener, OnP
 		tsHome.setContent(new TabFactory(this));
 		tabhost.addTab(tsHome);
 		
-		if(ismember) {
+		if(ismember || idusercreate.equals(Const.iduser)) {
 			TabSpec tsMember = (tabhost.newTabSpec(TAB_MEMBER)).setIndicator(TAB_MEMBER);
 			TabSpec tsChat = (tabhost.newTabSpec(TAB_CHAT)).setIndicator(TAB_CHAT);
 			TabSpec tsDoc = (tabhost.newTabSpec(TAB_DOC)).setIndicator(TAB_DOC);

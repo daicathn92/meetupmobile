@@ -26,6 +26,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import dhbk.meetup.mobile.R;
@@ -50,6 +51,7 @@ public class TabHome extends Fragment implements OnClickListener{
 	boolean ispublic;
 	private String idevent = "0", nextpoint, iduser;
 	boolean ismember = false;
+	boolean isnextpoint = false;
 	private String idusercreate;
 	
 	public LocationManager locationManager;
@@ -90,13 +92,20 @@ public class TabHome extends Fragment implements OnClickListener{
 			imgbtn_edit.setOnClickListener(this);
 			imgbtn_join.setVisibility(View.GONE);
 		} else if(ismember) {
-			imgbtn_nextpoint.setVisibility(View.GONE);
+//			imgbtn_nextpoint.setVisibility(View.GONE);
+			imgbtn_nextpoint.setOnClickListener(this);
 			imgbtn_edit.setVisibility(View.GONE);
 			imgbtn_join.setVisibility(View.GONE);
 		} else {
 			imgbtn_nextpoint.setVisibility(View.GONE);
 			imgbtn_edit.setVisibility(View.GONE);
 			imgbtn_join.setOnClickListener(this);
+		}
+		
+		if(isnextpoint) {
+			imgbtn_nextpoint.setVisibility(View.GONE);
+			LinearLayout lnl = (LinearLayout) v.findViewById(R.id.tabhome_lnl);
+			lnl.setVisibility(View.GONE);
 		}
 		
 		if(Utils.isConnectNetwork(getActivity())) {
@@ -201,6 +210,7 @@ public class TabHome extends Fragment implements OnClickListener{
 			break;
 		case R.id.tabhome_imgbtn_nextpoint :
 			Intent it_ = new Intent(getActivity().getApplicationContext(), EventLink.class);
+			it_.putExtra("idusercreate", idusercreate);
 			it_.putExtra("idevent", idevent);
 			startActivity(it_);
 			break;
@@ -234,6 +244,10 @@ public class TabHome extends Fragment implements OnClickListener{
 	
 	public void setIdusercreate(String idusercreate) {
 		this.idusercreate = idusercreate;
+	}
+	
+	public void setIsnextpoint(boolean isnextpoint) {
+		this.isnextpoint = isnextpoint;
 	}
 	
 	public String loadInfoEvent () {

@@ -44,4 +44,11 @@ public class Utils {
 				return "hon 1 ngay truoc";
     	}
     }
+    
+    public static long deltaDay (long startDay, long endDay) {
+    	long delta = endDay - startDay + 1000*60*60*12;
+//    	System.out.println("START DAY : " + startDay);
+//    	System.out.println("END DAY : " + endDay);
+    	return (delta) / (1000*60*60*24);
+    }
 }

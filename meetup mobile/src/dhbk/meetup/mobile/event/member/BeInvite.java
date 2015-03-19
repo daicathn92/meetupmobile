@@ -25,7 +25,7 @@ public class BeInvite {
 		lv_invite.setAdapter(evhp.listinviteAdapter);
 		
 		dialog = new AlertDialog.Builder(evhp).create();
-		dialog.setTitle("Be Invite");
+		dialog.setTitle("Invited");
 		dialog.setView(v, 0, 0, 0, 0);
 //		dialog.show();
 	}

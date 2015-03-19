@@ -32,8 +32,12 @@ public class DynamicListView extends ListView {
     private final int SMOOTH_SCROLL_AMOUNT_AT_EDGE = 15;
     private final int MOVE_DURATION = 150;
     private final int LINE_THICKNESS = 15;
+    
+    public Context mContext;
 
     public ArrayList<EventObject> mEventObject;
+    public boolean isDraggable = false;
+    public boolean fromLocal = false;
 
     private int mLastEventY = -1;
 
@@ -78,9 +82,11 @@ public class DynamicListView extends ListView {
 
     public void init(Context context) {
         setOnItemLongClickListener(mOnItemLongClickListener);
+//        setOnItemClickListener(mOnItemClickListener);
         setOnScrollListener(mScrollListener);
         DisplayMetrics metrics = context.getResources().getDisplayMetrics();
         mSmoothScrollAmountAtEdge = (int)(SMOOTH_SCROLL_AMOUNT_AT_EDGE / metrics.density);
+        mContext = context;
     }
 
     /**
@@ -90,24 +96,26 @@ public class DynamicListView extends ListView {
     private AdapterView.OnItemLongClickListener mOnItemLongClickListener =
             new AdapterView.OnItemLongClickListener() {
                 public boolean onItemLongClick(AdapterView<?> arg0, View arg1, int pos, long id) {
-                    mTotalOffset = 0;
-
-                    int position = pointToPosition(mDownX, mDownY);
-                    int itemNum = position - getFirstVisiblePosition();
-
-                    View selectedView = getChildAt(itemNum);
-                    mMobileItemId = getAdapter().getItemId(position);
-                    mHoverCell = getAndAddHoverView(selectedView);
-                    selectedView.setVisibility(INVISIBLE);
-
-                    mCellIsMobile = true;
-
-                    updateNeighborViewsForID(mMobileItemId);
+                	if(isDraggable) {
+	                    mTotalOffset = 0;
+	
+	                    int position = pointToPosition(mDownX, mDownY);
+	                    int itemNum = position - getFirstVisiblePosition();
+	
+	                    View selectedView = getChildAt(itemNum);
+	                    mMobileItemId = getAdapter().getItemId(position);
+	                    mHoverCell = getAndAddHoverView(selectedView);
+	                    selectedView.setVisibility(INVISIBLE);
+	
+	                    mCellIsMobile = true;
+	
+	                    updateNeighborViewsForID(mMobileItemId);
+                	}
 
                     return true;
                 }
             };
-
+            
     /**
      * Creates the hover cell with the appropriate bitmap and of appropriate
      * size. The hover cell's BitmapDrawable is drawn on top of the bitmap every
@@ -166,22 +174,40 @@ public class DynamicListView extends ListView {
      */
     private void updateNeighborViewsForID(long itemID) {
         int position = getPositionForID(itemID);
-        StableArrayAdapter adapter = ((StableArrayAdapter)getAdapter());
-        mAboveItemId = adapter.getItemId(position - 1);
-        mBelowItemId = adapter.getItemId(position + 1);
+        if(fromLocal) {
+        	ListEventLocalAdapter adapter = ((ListEventLocalAdapter)getAdapter());
+	        mAboveItemId = adapter.getItemId(position - 1);
+	        mBelowItemId = adapter.getItemId(position + 1);
+        } else {
+	        StableArrayAdapter adapter = ((StableArrayAdapter)getAdapter());
+	        mAboveItemId = adapter.getItemId(position - 1);
+	        mBelowItemId = adapter.getItemId(position + 1);
+        }
     }
 
     /** Retrieves the view in the list corresponding to itemID */
     public View getViewForID (long itemID) {
         int firstVisiblePosition = getFirstVisiblePosition();
-        StableArrayAdapter adapter = ((StableArrayAdapter)getAdapter());
-        for(int i = 0; i < getChildCount(); i++) {
-            View v = getChildAt(i);
-            int position = firstVisiblePosition + i;
-            long id = adapter.getItemId(position);
-            if (id == itemID) {
-                return v;
-            }
+        if(fromLocal) {
+        	ListEventLocalAdapter adapter = ((ListEventLocalAdapter)getAdapter());
+	        for(int i = 0; i < getChildCount(); i++) {
+	            View v = getChildAt(i);
+	            int position = firstVisiblePosition + i;
+	            long id = adapter.getItemId(position);
+	            if (id == itemID) {
+	                return v;
+	            }
+	        }
+        } else {
+	        StableArrayAdapter adapter = ((StableArrayAdapter)getAdapter());
+	        for(int i = 0; i < getChildCount(); i++) {
+	            View v = getChildAt(i);
+	            int position = firstVisiblePosition + i;
+	            long id = adapter.getItemId(position);
+	            if (id == itemID) {
+	                return v;
+	            }
+	        }
         }
         return null;
     }

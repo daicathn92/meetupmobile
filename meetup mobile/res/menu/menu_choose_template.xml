@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    
+	<item 
+	    android:id="@+id/menu_template_local"
+	    android:title="Local"/>
+	
+	<item 
+	    android:id="@+id/menu_template_online"
+	    android:title="Online"/>
+    
+</menu>

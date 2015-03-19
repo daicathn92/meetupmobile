@@ -17,10 +17,13 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.widget.DrawerLayout;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -28,35 +31,40 @@ import android.view.View.OnClickListener;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ImageButton;
 import android.widget.ListView;
-import android.widget.PopupMenu;
-import android.widget.PopupMenu.OnMenuItemClickListener;
 import android.widget.Toast;
 import dhbk.meetup.mobile.R;
 import dhbk.meetup.mobile.event.adapter.ListEventAdapter;
 import dhbk.meetup.mobile.event.adapter.ListInviteAdapter;
+import dhbk.meetup.mobile.event.adapter.ListMenuAdapter;
 import dhbk.meetup.mobile.event.member.BeInvite;
 import dhbk.meetup.mobile.event.object.EventObject;
 import dhbk.meetup.mobile.event.object.InviteObject;
 import dhbk.meetup.mobile.event.service.NewsService;
 import dhbk.meetup.mobile.httpconnect.HttpConnect;
 import dhbk.meetup.mobile.login.Login;
+import dhbk.meetup.mobile.profile.Profile;
 import dhbk.meetup.mobile.utils.Const;
 import dhbk.meetup.mobile.utils.DialogWaiting;
 import dhbk.meetup.mobile.utils.Utils;
 
 @SuppressLint("NewApi")
-public class EventHomePage extends Activity implements OnClickListener, OnMenuItemClickListener{
+public class EventHomePage extends Activity implements OnClickListener{
 
-	public static final int REQUESTCODE_TABHOME = 100;
+	public static final int REQUESTCODE_TABHOME = 10;
+	public static final int REQUESTCODE_IMPORTTEMPLATE = 100;
+	
 	public static final int TIME_UPDATE = 5000;
+	
 	public static final String EVENT_LISTEVENT = "listevent";
 	public static final String EVENT_LISTEVENTREGISTERED = "listeventregistered";
 	public static final String EVENT_LISTINVITE = "listinvite";
 	public static final String EVENT_ADDMEMBER = "addmember";
 	
-	public static final int MENU_SIGNOUT = Menu.FIRST; 
+	public static final int MENU_ALL = 1;
+	public static final int MENU_OWN = 2;
+	public static final int MENU_REGISTERED = 3;
+	public static final int MENU_OCCURRED = 4;
 	
 	private HttpConnect conn;
 	private ListView lv_event;
@@ -84,12 +92,18 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 	};
 	
 	private DialogWaiting dialog;
-	private PopupMenu popupMenu;
+//	private PopupMenu popupMenu;
 	private AtomicBoolean isFilter = new AtomicBoolean(false);
 	
 	public ListInviteAdapter listinviteAdapter;
 	public ArrayList<InviteObject> listinvite = new ArrayList<InviteObject>();
 	public BeInvite beInvite;
+	
+	// navigation drawer
+	private ListView lv_menu;
+	private ListMenuAdapter menuAdapter;
+	private DrawerLayout drawerLayout;
+	private ActionBarDrawerToggle drawerToggle;
 	
 	@SuppressLint("NewApi")
 	@Override
@@ -134,15 +148,15 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 					}
 		});
 		
-		ImageButton imgbtn_createevent = (ImageButton) findViewById(R.id.homepage_imgbtn_createevent);
-		imgbtn_createevent.setOnClickListener(this);
-		final ImageButton imgbtn_filter = (ImageButton) findViewById(R.id.homepage_imgbtn_filter);
-		imgbtn_filter.setOnClickListener(this);
-		ImageButton imgbtn_listinvite = (ImageButton) findViewById(R.id.homepage_imgbtn_listinvite);
-		imgbtn_listinvite.setOnClickListener(this);
-		popupMenu = new PopupMenu(this, imgbtn_filter);
-		popupMenu.setOnMenuItemClickListener(this);
-		popupMenu.getMenuInflater().inflate(R.menu.menufilter, popupMenu.getMenu());
+//		ImageButton imgbtn_createevent = (ImageButton) findViewById(R.id.homepage_imgbtn_createevent);
+//		imgbtn_createevent.setOnClickListener(this);
+//		final ImageButton imgbtn_filter = (ImageButton) findViewById(R.id.homepage_imgbtn_filter);
+//		imgbtn_filter.setOnClickListener(this);
+//		ImageButton imgbtn_listinvite = (ImageButton) findViewById(R.id.homepage_imgbtn_listinvite);
+//		imgbtn_listinvite.setOnClickListener(this);
+//		popupMenu = new PopupMenu(this, imgbtn_filter);
+//		popupMenu.setOnMenuItemClickListener(this);
+//		popupMenu.getMenuInflater().inflate(R.menu.menufilter, popupMenu.getMenu());
 		
 		// dialog list invite
 		listinviteAdapter = new ListInviteAdapter(this, listinvite);
@@ -171,108 +185,62 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 		editor.putString("username", Const.username);
 		editor.putString("password", Const.password);
 		editor.commit();
+		
+		// create navigation drawer
+		lv_menu = (ListView) findViewById(R.id.homepage_left_drawer);
+		drawerLayout = (DrawerLayout) findViewById(R.id.homepage_drawer_layout);
+		menuAdapter = new ListMenuAdapter(this, Const.listimg, getResources().getStringArray(R.array.arr_menu_homepage));
+		lv_menu.setAdapter(menuAdapter);
+		lv_menu.setOnItemClickListener(new OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> arg0, View arg1, int position,
+					long arg3) {
+				// TODO Auto-generated method stub
+				lv_menu.setItemChecked(position, true);
+				drawerLayout.closeDrawer(lv_menu);
+				switch (position) {
+				case 0 : 	Intent _it = new Intent (EventHomePage.this, ImportTemplate.class);
+						 	startActivityForResult(_it, REQUESTCODE_IMPORTTEMPLATE); 				break;
+				case 1 : 	/*Post template*/														break; 
+				case 2 : 	Intent it = new Intent(getApplicationContext(), CreateEvent.class);
+							startActivity(it);														break;
+				case 3 :	invited();																break;
+				case 4 :	Intent __it = new Intent(EventHomePage.this, Profile.class);
+							startActivity(__it);													break;
+				case 5 : 	signout(); 																break;
+				default : 																			break;
+				}
+				
+			}
+		});
+		
+		drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, R.drawable.ic_drawer, 0, 0){};	
+		drawerLayout.setDrawerListener(drawerToggle);
+		
+		getActionBar().setDisplayHomeAsUpEnabled(true);
+		getActionBar().setHomeButtonEnabled(true);
 	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// TODO Auto-generated method stub
 		super.onCreateOptionsMenu(menu);
-		menu.add(0, MENU_SIGNOUT, 0, "Sign out");
+		menu.add(0, MENU_ALL, 0, "All");
+		menu.add(0, MENU_OWN, 0, "Own");
+		menu.add(0, MENU_REGISTERED, 0, "Registered");
+		menu.add(0, MENU_OCCURRED, 0, "Occurred");
 		return true;
-	}
-	
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		// TODO Auto-generated method stub
-		super.onActivityResult(requestCode, resultCode, data);
-		System.out.println("RESULT FOR ACTIVITY OK 2");
-		if(requestCode == REQUESTCODE_TABHOME) {
-			System.out.println("RESULT FOR ACTIVITY OK 1");
-			if(resultCode == RESULT_OK) {
-				try {
-					System.out.println("RESULT FOR ACTIVITY OK");
-					String idevent_ = data.getExtras().getString("idevent");
-					String idusercreate_ = data.getExtras().getString("idusercreate");
-					listteventregistred.add(idevent_);
-					
-					Intent it = new Intent(EventHomePage.this, AEvent.class);
-					it.putExtra("idevent", idevent_);
-					it.putExtra("ismember", true);
-					it.putExtra("iduser", "none");
-					it.putExtra("idusercreate", idusercreate_);
-					startActivityForResult(it, REQUESTCODE_TABHOME);
-					System.out.println("START ACTIVITY OK");
-				} catch (Exception e) {}
-			}
-		}
 	}
 	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// TODO Auto-generated method stub
-		switch(item.getItemId()) {
-		case MENU_SIGNOUT :
-			SharedPreferences prefs = getSharedPreferences(Const.PREFERENCE_MEETUP_MOBILE, Context.MODE_PRIVATE);
-			SharedPreferences.Editor editor = prefs.edit();
-			editor.putString("username", "");
-			editor.putString("password", "");
-			editor.commit();
-			Intent itS = new Intent(getApplicationContext(), NewsService.class);
-			itS.putExtra("iduser", "0");
-			startService(itS);
-			Intent it = new Intent(getApplicationContext(), Login.class);
-			startActivity(it);
-			finish();
-			return true;
-		default : return false;
-		}
-	}
-	
-	@SuppressLint("NewApi")
-	@Override
-	public void onClick(View v) {
-		// TODO Auto-generated method stub
-		switch(v.getId()) {
-		case R.id.homepage_imgbtn_listinvite :
-			if(Utils.isConnectNetwork(EventHomePage.this)) {
-				if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-					new asyncListInvite().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-				} else {
-					new asyncListInvite().execute() ;
-				}
-			} else {
-				Toast.makeText(getApplicationContext(), "Not connected network", Toast.LENGTH_SHORT).show();
-			}
-			break;
-		case R.id.homepage_imgbtn_createevent :
-			Intent it = new Intent(getApplicationContext(), CreateEvent.class);
-			startActivity(it);
-			break;
-		case R.id.homepage_imgbtn_filter :
-			popupMenu.show();
-			break;
-		default : break; 
-		}
-	}
-	
-	@SuppressLint("NewApi")
-	@Override
-	public boolean onMenuItemClick(MenuItem item) {
-		// TODO Auto-generated method stub
 		String filter = "";
 		switch(item.getItemId()) {
-		case R.id.filter_all :
-			filter = "all";
-			break;
-		case R.id.filter_own :
-			filter = "own";
-			break;
-		case R.id.filter_registered :
-			filter = "registered";
-			break;
-		case R.id.filter_occurred :
-			filter = "occurred";
-			break;
+		case MENU_ALL : 			filter = "all";				break;
+		case MENU_OWN : 			filter = "own";				break;
+		case MENU_REGISTERED :  	filter = "registered";		break;
+		case MENU_OCCURRED : 		filter = "occurred";		break;
 		default : return false;
 		}
 		
@@ -292,6 +260,153 @@ public class EventHomePage extends Activity implements OnClickListener, OnMenuIt
 		}
 	}
 	
+	@Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // Sync the toggle state after onRestoreInstanceState has occurred.
+        drawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        drawerToggle.onConfigurationChanged(newConfig);
+    }
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		// TODO Auto-generated method stub
+		super.onActivityResult(requestCode, resultCode, data);
+		System.out.println("RESULT FOR ACTIVITY OK 2");
+		
+		// join event (chua xu ly xong)
+		if(requestCode == REQUESTCODE_TABHOME) {
+			System.out.println("RESULT FOR ACTIVITY OK 1");
+			if(resultCode == RESULT_OK) {
+				try {
+					System.out.println("RESULT FOR ACTIVITY OK");
+					String idevent_ = data.getExtras().getString("idevent");
+					String idusercreate_ = data.getExtras().getString("idusercreate");
+					listteventregistred.add(idevent_);
+					
+					Intent it = new Intent(EventHomePage.this, AEvent.class);
+					it.putExtra("idevent", idevent_);
+					it.putExtra("ismember", true);
+					it.putExtra("iduser", "none");
+					it.putExtra("idusercreate", idusercreate_);
+					startActivityForResult(it, REQUESTCODE_TABHOME);
+					System.out.println("START ACTIVITY OK");
+				} catch (Exception e) {}
+			}
+		}
+		
+		// xu ly khi import template xong
+		if(requestCode == REQUESTCODE_IMPORTTEMPLATE) {
+			System.out.println("RESULT FOR ACTIVITY OK 1");
+			if(resultCode == RESULT_OK) {
+				// change list
+				if(Utils.isConnectNetwork(EventHomePage.this)) {
+					if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+						new asyncUpdateEvent().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "all");
+					} else {
+						new asyncUpdateEvent().execute("all");
+					}
+				}
+			}
+		}
+	}
+	
+	@SuppressLint("NewApi")
+	@Override
+	public void onClick(View v) {
+		// TODO Auto-generated method stub
+//		switch(v.getId()) {
+//		case R.id.homepage_imgbtn_listinvite :
+//			if(Utils.isConnectNetwork(EventHomePage.this)) {
+//				if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+//					new asyncListInvite().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+//				} else {
+//					new asyncListInvite().execute() ;
+//				}
+//			} else {
+//				Toast.makeText(getApplicationContext(), "Not connected network", Toast.LENGTH_SHORT).show();
+//			}
+//			break;
+//		case R.id.homepage_imgbtn_createevent :
+//			Intent it = new Intent(getApplicationContext(), CreateEvent.class);
+//			startActivity(it);
+//			break;
+//		case R.id.homepage_imgbtn_filter :
+//			popupMenu.show();
+//			break;
+//		default : break; 
+//		}
+	}
+	
+//	@SuppressLint("NewApi")
+//	@Override
+//	public boolean onMenuItemClick(MenuItem item) {
+//		// TODO Auto-generated method stub
+//		String filter = "";
+//		switch(item.getItemId()) {
+//		case R.id.filter_all :
+//			filter = "all";
+//			break;
+//		case R.id.filter_own :
+//			filter = "own";
+//			break;
+//		case R.id.filter_registered :
+//			filter = "registered";
+//			break;
+//		case R.id.filter_occurred :
+//			filter = "occurred";
+//			break;
+//		default : return false;
+//		}
+//		
+//		if(filter.equals("")){
+//			return false;
+//		} else {
+//			if(Utils.isConnectNetwork(EventHomePage.this)) {
+//				if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+//					new asyncUpdateEvent().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, filter);
+//				} else {
+//					new asyncUpdateEvent().execute(filter);
+//				}
+//			} else {
+//				Toast.makeText(getApplicationContext(), "Network not connected", Toast.LENGTH_SHORT).show();
+//			}
+//			return true;
+//		}
+//	}
+	
+	public void signout () {
+		SharedPreferences prefs = getSharedPreferences(Const.PREFERENCE_MEETUP_MOBILE, Context.MODE_PRIVATE);
+		SharedPreferences.Editor editor = prefs.edit();
+		editor.putString("username", "");
+		editor.putString("password", "");
+		editor.commit();
+		Intent itS = new Intent(getApplicationContext(), NewsService.class);
+		itS.putExtra("iduser", "0");
+		startService(itS);
+		Intent it = new Intent(getApplicationContext(), Login.class);
+		startActivity(it);
+		finish();
+	}
+	
+	public void invited () {
+		if(Utils.isConnectNetwork(EventHomePage.this)) {
+			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+				new asyncListInvite().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+			} else {
+				new asyncListInvite().execute() ;
+			}
+		} else {
+			Toast.makeText(getApplicationContext(), "Not connected network", Toast.LENGTH_SHORT).show();
+		}
+	}
+	
+	//-----------------------action asynctask-----------------------
 	public boolean updateEvent(String filter) {
 		String url = Const.DOMAIN_NAME + EVENT_LISTEVENT;
 		

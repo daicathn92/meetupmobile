@@ -23,9 +23,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.AdapterView;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Toast;
+import android.widget.AdapterView.OnItemClickListener;
 import dhbk.meetup.mobile.R;
 import dhbk.meetup.mobile.event.adapter.DynamicListView;
 import dhbk.meetup.mobile.event.adapter.StableArrayAdapter;
@@ -33,6 +36,8 @@ import dhbk.meetup.mobile.event.object.EventObject;
 import dhbk.meetup.mobile.httpconnect.HttpConnect;
 import dhbk.meetup.mobile.utils.Const;
 import dhbk.meetup.mobile.utils.DialogWaiting;
+import dhbk.meetup.mobile.utils.FormatFileApp;
+import dhbk.meetup.mobile.utils.Storage;
 import dhbk.meetup.mobile.utils.Utils;
 
 public class EventLink extends Activity implements OnClickListener{
@@ -43,15 +48,19 @@ public class EventLink extends Activity implements OnClickListener{
 	public static final int REQUESTCODE_CREATEEVENT = 1;
 	
 	public String idevent;
+	public String idusercreate;
 	public ArrayList<EventObject> listEvent = new ArrayList<EventObject>();
 	public ArrayList<String> listIdevent = new ArrayList<String>();
 	
 	public StableArrayAdapter adapter ;
 	public DynamicListView listView ;
+	public ImageButton imgbtn_add;
 	
 	private HttpConnect conn;
 	private DialogWaiting dialog;
 	public LocationManager locationManager;
+	
+	public ArrayList<String> listFiles;
 	
 	@SuppressLint({ "InlinedApi", "NewApi" })
 	@Override
@@ -62,12 +71,14 @@ public class EventLink extends Activity implements OnClickListener{
 		
 		Intent it = getIntent();
 		idevent = it.getExtras().getString("idevent");
+		idusercreate = it.getExtras().getString("idusercreate");
 		
-		ImageButton imgbtn_add = (ImageButton) findViewById(R.id.event_link_imgbtn_add);
+		imgbtn_add = (ImageButton) findViewById(R.id.event_link_imgbtn_add);
 		imgbtn_add.setOnClickListener(this);
 		ImageButton imgbtn_export = (ImageButton) findViewById(R.id.event_link_imgbtn_export);
 		imgbtn_export.setOnClickListener(this);
         listView = (DynamicListView) findViewById(R.id.event_link_lv);
+        listView.setOnItemClickListener(mOnItemClickListener);
 
         dialog = new DialogWaiting(this);
 		conn = new HttpConnect();
@@ -137,6 +148,24 @@ public class EventLink extends Activity implements OnClickListener{
 			super.onBackPressed();
 		}
 	}
+	
+	private OnItemClickListener mOnItemClickListener = 
+   		 new OnItemClickListener() {
+				@Override
+				public void onItemClick(AdapterView<?> arg0, View arg1,
+						int arg2, long arg3) {
+					// TODO Auto-generated method stub
+					Intent it = new Intent(EventLink.this, AEventOfTour.class);
+					String idevent_ = listEvent.get(arg2).idevent;
+					it.putExtra("idevent", idevent_);
+					it.putExtra("ismember", true);
+					it.putExtra("iduser", "none");
+					if(listView.isDraggable)
+							it.putExtra("idusercreate", Const.iduser);
+					else 	it.putExtra("idusercreate", listEvent.get(arg2).idown);
+					EventLink.this.startActivity(it);
+				}
+	};
 
 	@Override
 	public void onClick(View v) {
@@ -148,7 +177,19 @@ public class EventLink extends Activity implements OnClickListener{
 			startActivityForResult(it,REQUESTCODE_CREATEEVENT);
 			break;
 		case R.id.event_link_imgbtn_export :
+			listFiles = Storage.getListFile(EventLink.this);
+			showDialogExportFile();
 			
+			// show result
+			ArrayList<String> arr = Storage.getListFile(EventLink.this);
+			int count = 0;
+			for(String s : arr) {
+				
+				System.out.println(count + " : " + s);
+				String result = Storage.readFile(s, EventLink.this);
+				System.out.println(result);
+				count++;
+			}
 			break;
 		default : break;
 		}
@@ -170,6 +211,82 @@ public class EventLink extends Activity implements OnClickListener{
 		}
 	}
 	
+	public void showDialogExportFile () {
+		final EditText input = new EditText(EventLink.this);
+		AlertDialog alertDialog;
+		alertDialog = new AlertDialog.Builder(EventLink.this)
+				.setTitle("Export file")
+				.setMessage("File name")
+				.setView(input)
+				.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						// TODO Auto-generated method stub
+						if(input.getText().toString().equals("")) {
+							Toast.makeText(EventLink.this, "Fill file name", Toast.LENGTH_SHORT).show();
+							showDialogExportFile();
+							dialog.dismiss();
+						} else {
+							boolean isDuppliacte = false;
+							for(String s : listFiles) {
+								if(s.equals(input.getText().toString()+".meetup")) {
+									isDuppliacte = true;
+									break;
+								}
+							}
+							if(isDuppliacte) {
+//								Toast.makeText(EventLink.this, "", Toast.LENGTH_SHORT).show();
+								
+								new AlertDialog.Builder(EventLink.this)
+								.setTitle("Dupplicate")
+								.setMessage("File is exist. \nDo you want replace")
+								.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										// TODO Auto-generated method stub
+										if(Storage.writerFile(input.getText().toString(), FormatFileApp.formatEventToFile(listEvent), EventLink.this)) {
+											Toast.makeText(EventLink.this, "File saved", Toast.LENGTH_SHORT).show();
+											dialog.dismiss();
+										} else {
+											Toast.makeText(EventLink.this, "Save Fail", Toast.LENGTH_SHORT).show();
+											dialog.dismiss();
+										}
+									}
+									
+								})
+								.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										// TODO Auto-generated method stub
+										dialog.cancel();
+									}
+								})
+								.show();
+							} else {
+								if(Storage.writerFile(input.getText().toString(), FormatFileApp.formatEventToFile(listEvent), EventLink.this)) {
+									Toast.makeText(EventLink.this, "File saved", Toast.LENGTH_SHORT).show();
+									dialog.dismiss();
+								} else {
+									Toast.makeText(EventLink.this, "Save Fail. Try again", Toast.LENGTH_SHORT).show();
+//									dialog.dismiss();
+								}
+							}
+						}
+					}
+					
+				})
+				.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						// TODO Auto-generated method stub
+						dialog.cancel();
+					}
+				})
+				.show();
+	}
+	
+	//--------------------------AsyncTask------------------------------------
 	public String loadListLinkEvent () {
 		String url = Const.DOMAIN_NAME + EVENT_POINT_TO_POINT;
 		
@@ -280,6 +397,11 @@ public class EventLink extends Activity implements OnClickListener{
 				listView.setCheeseList(listEvent);
 		        listView.setAdapter(adapter);
 		        listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+		        if(Const.iduser.equals(idusercreate)) {
+		        	listView.isDraggable = true;
+		        } else {
+		        	imgbtn_add.setVisibility(View.INVISIBLE);
+		        }
 				adapter.notifyDataSetChanged();
 				for(EventObject eo : listEvent) {
 					listIdevent.add(eo.idevent);

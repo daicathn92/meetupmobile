@@ -1,5 +1,7 @@
 package dhbk.meetup.mobile.utils;
 
+import dhbk.meetup.mobile.R;
+
 public class Const {
 
 	public static final String DOMAIN_NAME = "http://meetup-datn.rhcloud.com/meetup/";
@@ -11,4 +13,13 @@ public class Const {
 	public static String username = "";
 	public static String password = "";
 	public static String iduser = "";
+	
+	public static final Integer[] listimg  = {
+		R.drawable.import_,
+		R.drawable.ic_launcher,
+		R.drawable.add,
+		R.drawable.listinvite,
+		R.drawable.ic_launcher,
+		R.drawable.ic_launcher
+	};
 }

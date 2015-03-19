@@ -60,6 +60,8 @@ public class TabMember extends Fragment implements OnClickListener{
 	
 	public LocationManager locationManager;
 	
+	public boolean fromAEvent = true;
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
@@ -111,9 +113,15 @@ public class TabMember extends Fragment implements OnClickListener{
 			if(resultCode == getActivity().RESULT_OK) {
 				if(Utils.isGPSEnable(locationManager)) {
 					Intent it = new Intent(getActivity().getApplicationContext(), TrackGPS.class);
-					it.putExtra("lat", ((AEvent)getActivity()).th.lat);
-					it.putExtra("lng", ((AEvent)getActivity()).th.lng);
-					it.putExtra("place", ((AEvent)getActivity()).th.tv_place.getText().toString());
+					if(fromAEvent) {
+						it.putExtra("lat", ((AEvent)getActivity()).th.lat);
+						it.putExtra("lng", ((AEvent)getActivity()).th.lng);
+						it.putExtra("place", ((AEvent)getActivity()).th.tv_place.getText().toString());
+					} else {
+						it.putExtra("lat", ((AEventOfTour)getActivity()).th.lat);
+						it.putExtra("lng", ((AEventOfTour)getActivity()).th.lng);
+						it.putExtra("place", ((AEventOfTour)getActivity()).th.tv_place.getText().toString());
+					}
 					it.putExtra("listid", listIduserWithJson());
 					startActivity(it);
 				}
@@ -154,9 +162,15 @@ public class TabMember extends Fragment implements OnClickListener{
 		case R.id.tabmember_imgbtn_track :
 			if(Utils.isGPSEnable(locationManager)) {
 				Intent it = new Intent(getActivity().getApplicationContext(), TrackGPS.class);
-				it.putExtra("lat", ((AEvent)getActivity()).th.lat);
-				it.putExtra("lng", ((AEvent)getActivity()).th.lng);
-				it.putExtra("place", ((AEvent)getActivity()).th.tv_place.getText().toString());
+				if(fromAEvent) {
+					it.putExtra("lat", ((AEvent)getActivity()).th.lat);
+					it.putExtra("lng", ((AEvent)getActivity()).th.lng);
+					it.putExtra("place", ((AEvent)getActivity()).th.tv_place.getText().toString());
+				} else {
+					it.putExtra("lat", ((AEventOfTour)getActivity()).th.lat);
+					it.putExtra("lng", ((AEventOfTour)getActivity()).th.lng);
+					it.putExtra("place", ((AEventOfTour)getActivity()).th.tv_place.getText().toString());
+				}
 				it.putExtra("listid", listIduserWithJson());
 				startActivity(it);
 			} else {
@@ -180,6 +194,10 @@ public class TabMember extends Fragment implements OnClickListener{
 	
 	public void setIdevent(String idevent) {
 		this.idevent = idevent;
+	}
+	
+	public void setFromAEvent(boolean fromAEvent) {
+		this.fromAEvent = fromAEvent;
 	}
 	
 	@SuppressLint("NewApi")

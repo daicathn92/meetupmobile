@@ -5,4 +5,14 @@
         <item>Male</item>
         <item>Female</item>
     </string-array>
+    
+    <string-array name="arr_menu_homepage">
+        <item>Import Template</item>
+        <item>Post Template</item>
+        <item>Create Event</item>
+        <item>Invited</item>
+        <item>Profile</item>
+        <item>SignOut</item>
+    </string-array>
+    
 </resources>
