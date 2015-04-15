@@ -73,23 +73,23 @@ public class EventHomePage extends Activity implements OnClickListener{
 	private ArrayList<EventObject> listeventupdate;
 	private ArrayList<String> listteventregistred = new ArrayList<String>();
 	
-	private Handler handler_updateEvent;
-	private Runnable update = new Runnable() {
-		@SuppressLint("NewApi")
-		@Override
-		public void run() {
-			// TODO Auto-generated method stub
-			if(Utils.isConnectNetwork(EventHomePage.this)) {
-				if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-					new asyncUpdateEvent().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-				} else {
-					new asyncUpdateEvent().execute() ;
-				}
-			} else {
-				handler_updateEvent.postDelayed(update, TIME_UPDATE);
-			}
-		}
-	};
+//	private Handler handler_updateEvent;
+//	private Runnable update = new Runnable() {
+//		@SuppressLint("NewApi")
+//		@Override
+//		public void run() {
+//			// TODO Auto-generated method stub
+//			if(Utils.isConnectNetwork(EventHomePage.this)) {
+//				if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+//					new asyncUpdateEvent().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+//				} else {
+//					new asyncUpdateEvent().execute() ;
+//				}
+//			} else {
+//				handler_updateEvent.postDelayed(update, TIME_UPDATE);
+//			}
+//		}
+//	};
 	
 	private DialogWaiting dialog;
 //	private PopupMenu popupMenu;
@@ -144,6 +144,7 @@ public class EventHomePage extends Activity implements OnClickListener{
 						it.putExtra("ismember", b);
 						it.putExtra("iduser", "none");
 						it.putExtra("idusercreate", listevent.get(arg2).idown);
+						System.out.println("PUT EXTRA IDOWN : " + listevent.get(arg2).idown);
 						startActivityForResult(it, REQUESTCODE_TABHOME);
 					}
 		});
@@ -201,7 +202,8 @@ public class EventHomePage extends Activity implements OnClickListener{
 				switch (position) {
 				case 0 : 	Intent _it = new Intent (EventHomePage.this, ImportTemplate.class);
 						 	startActivityForResult(_it, REQUESTCODE_IMPORTTEMPLATE); 				break;
-				case 1 : 	/*Post template*/														break; 
+				case 1 : 	Intent ___it = new Intent(EventHomePage.this, ShareTemplate.class);		
+							startActivity(___it); 													break; 
 				case 2 : 	Intent it = new Intent(getApplicationContext(), CreateEvent.class);
 							startActivity(it);														break;
 				case 3 :	invited();																break;
@@ -279,22 +281,22 @@ public class EventHomePage extends Activity implements OnClickListener{
 		super.onActivityResult(requestCode, resultCode, data);
 		System.out.println("RESULT FOR ACTIVITY OK 2");
 		
-		// join event (chua xu ly xong)
+		// join event (chua xu ly xong) zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 		if(requestCode == REQUESTCODE_TABHOME) {
 			System.out.println("RESULT FOR ACTIVITY OK 1");
 			if(resultCode == RESULT_OK) {
 				try {
 					System.out.println("RESULT FOR ACTIVITY OK");
 					String idevent_ = data.getExtras().getString("idevent");
-					String idusercreate_ = data.getExtras().getString("idusercreate");
+//					String idusercreate_ = data.getExtras().getString("idusercreate");
 					listteventregistred.add(idevent_);
 					
-					Intent it = new Intent(EventHomePage.this, AEvent.class);
-					it.putExtra("idevent", idevent_);
-					it.putExtra("ismember", true);
-					it.putExtra("iduser", "none");
-					it.putExtra("idusercreate", idusercreate_);
-					startActivityForResult(it, REQUESTCODE_TABHOME);
+//					Intent it = new Intent(EventHomePage.this, AEvent.class);
+//					it.putExtra("idevent", idevent_);
+//					it.putExtra("ismember", true);
+//					it.putExtra("iduser", "none");
+//					it.putExtra("idusercreate", idusercreate_);
+//					startActivityForResult(it, REQUESTCODE_TABHOME);
 					System.out.println("START ACTIVITY OK");
 				} catch (Exception e) {}
 			}

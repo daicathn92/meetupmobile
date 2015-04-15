@@ -34,7 +34,6 @@ public class ListMemberAdapter extends ArrayAdapter<MemberObject>{
 	public View getView(final int position, View convertView, ViewGroup parent) {
 		// TODO Auto-generated method stub
 		
-		
 		View v = tabmember.getActivity().getLayoutInflater().inflate(R.layout.listmember_item, null, true);
 		
 		TextView tv_name = (TextView) v.findViewById(R.id.memberitem_tv_name);

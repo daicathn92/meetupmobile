@@ -22,21 +22,22 @@ public class UpdateLocation extends AsyncTask<String, Void, String>{
 	
 	public void updateMyLocation () {
 		System.out.println("START UPDATE  LOCATION");
-		Location myLocation = newsService.locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-		if(myLocation == null) {
-			myLocation = newsService.locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-			if(myLocation == null){
-				System.out.println("LOCATION NOT AVAIABLE");
-				return;
-			}
-		}
+//		Location myLocation = newsService.locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+//		if(myLocation == null) {
+//			myLocation = newsService.locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+//			if(myLocation == null){
+//				System.out.println("LOCATION NOT AVAIABLE");
+//				return;
+//			}
+//		}
+		
 		String url = Const.DOMAIN_NAME + NewsService.UPDATE_MYLOCATION;
 		HttpResponse response = null;
 		
 		try {
 			ArrayList<String[]> values = new ArrayList<String[]>();
 			values.add(new String[]{"iduser", newsService.iduser});
-			values.add(new String[]{"location", myLocation.getLatitude() + ";" + myLocation.getLongitude()
+			values.add(new String[]{"location", newsService.lat + ";" + newsService.lng
 													+ ";" + System.currentTimeMillis()});
 			response = newsService.connLocation.sendRequestPost(url, null, values);
 			String result = EntityUtils.toString(response.getEntity());
@@ -70,7 +71,7 @@ public class UpdateLocation extends AsyncTask<String, Void, String>{
 	protected void onPostExecute(String result) {
 		// TODO Auto-generated method stub
 		super.onPostExecute(result);
-		newsService.handlerLocation.postDelayed(newsService.updateMyLocation, NewsService.TIME_REPOST_CONNECT);
+		newsService.handlerLocation.postDelayed(newsService.updateMyLocation, NewsService.TIME_REPOST_CONNECT * 2);
 	}
 
 }

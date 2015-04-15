@@ -16,10 +16,10 @@ public class Const {
 	
 	public static final Integer[] listimg  = {
 		R.drawable.import_,
-		R.drawable.ic_launcher,
+		R.drawable.post,
 		R.drawable.add,
 		R.drawable.listinvite,
-		R.drawable.ic_launcher,
-		R.drawable.ic_launcher
+		R.drawable.profile,
+		R.drawable.signout
 	};
 }

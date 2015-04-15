@@ -14,7 +14,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -23,6 +22,14 @@ import android.os.Handler;
 import android.view.Menu;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
+import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
@@ -38,10 +45,12 @@ import dhbk.meetup.mobile.httpconnect.HttpConnect;
 import dhbk.meetup.mobile.utils.Const;
 import dhbk.meetup.mobile.utils.Utils;
 
-public class TrackGPS extends Activity implements OnMapReadyCallback, LocationListener, OnMarkerClickListener{
+public class TrackGPS extends Activity implements
+						OnMapReadyCallback, LocationListener, OnMarkerClickListener,
+						ConnectionCallbacks, OnConnectionFailedListener{
 
 	public static final String TRACKGPS_MEMBER = "location";
-	public static final long TIMEUPDATE_LOCATION = 15000;
+	public static final long TIMEUPDATE_LOCATION = 30000;
 	
 	private HttpConnect conn;
 	private GoogleMap map;
@@ -50,12 +59,15 @@ public class TrackGPS extends Activity implements OnMapReadyCallback, LocationLi
 	
 	public Location myLocation;
 	public LatLng desLocation;
-	public LocationManager locationManager;
+//	public LocationManager locationManager;
+	private GoogleApiClient googleApiClient;
+	private LocationRequest locationRequest;
 	public MarkerOptions markerPlaceMeeting;
 	public boolean isMarkerShow = false;
 	public ArrayList<Marker> listMarkers = new ArrayList<Marker>();
 	
 	public String listId = "";
+	private boolean locationAvaiable = false;
 	public Handler handler;
 	public Runnable updateLocation = new Runnable() {
 		
@@ -81,6 +93,19 @@ public class TrackGPS extends Activity implements OnMapReadyCallback, LocationLi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.map_tracker);
         
+        if(GooglePlayServicesUtil.isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS) {
+			System.out.println("YESSSSS");
+		} else {
+			System.out.println("NOOOO");
+			Toast.makeText(getApplicationContext(), "Google Play Service not Avaiable", Toast.LENGTH_SHORT).show();
+			finish();
+		}
+		
+		locationRequest = new LocationRequest();
+        locationRequest.setInterval(10000);
+        locationRequest.setFastestInterval(3000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        
         Intent it = getIntent();
 //		boolean onlyView = it.getExtras().getBoolean("onlyview");
 		String place = it.getExtras().getString("place");
@@ -93,13 +118,17 @@ public class TrackGPS extends Activity implements OnMapReadyCallback, LocationLi
 		handler = new Handler();
 		desLocation = new LatLng(lat, lng);
         mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.maptracker_map);
-        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        mapFragment.getMapAsync(this);
         markerPlaceMeeting = new MarkerOptions()
 									.title("Place meeting")
 									.snippet("Tai : " + place)
 									.anchor(0.5f, 1);
         
-        mapFragment.getMapAsync(this);
+        googleApiClient = new GoogleApiClient.Builder(this)
+								.addApi(LocationServices.API)
+								.addConnectionCallbacks(this)
+								.addOnConnectionFailedListener(this)
+								.build();
         
     }
 
@@ -111,20 +140,17 @@ public class TrackGPS extends Activity implements OnMapReadyCallback, LocationLi
     }
 
     @Override
-    protected void onResume() {
-    	// TODO Auto-generated method stub
-    	super.onResume();
-    	if(Utils.isGPSEnable(locationManager)) {
-    		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 10, this);
-    		locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10000, 10, this);
-    	} 
-    }
+	protected void onStart() {
+		// TODO Auto-generated method stub
+		super.onStart();
+		googleApiClient.connect();
+	}
     
     @Override
-    protected void onPause() {
+    protected void onStop() {
     	// TODO Auto-generated method stub
-    	super.onPause();
-    	locationManager.removeUpdates(this);
+    	super.onStop();
+    	googleApiClient.disconnect();
     }
     
     @Override
@@ -146,50 +172,37 @@ public class TrackGPS extends Activity implements OnMapReadyCallback, LocationLi
 		map.getUiSettings().setMyLocationButtonEnabled(true);
 		
 		// load my location
-		getMyLocation();
-		if(myLocation != null) { 
-			LatLng from = new LatLng(myLocation.getLatitude(), myLocation.getLongitude());
-//			System.out.println(from.latitude + " : " + from.longitude);
-//			System.out.println(desLocation.latitude + " : " + desLocation.longitude);
-			map.animateCamera(CameraUpdateFactory.newLatLngZoom(from, 13));
-			
-			if(myLocation == null) {
-				Toast.makeText(getApplicationContext(), "Location not available", Toast.LENGTH_SHORT).show();
-				return;
-			} else {
-				// find path
-				directions.findDirection(from, desLocation, Directions.MODE_WAY_DRIVING);
-				markerPlaceMeeting.position(desLocation);
-				map.addMarker(markerPlaceMeeting).showInfoWindow();
-			}
-		} else {
-			Toast.makeText(getApplicationContext(), "Location not available", Toast.LENGTH_SHORT).show();
-		}
+//		if(getMyLocation()) {
+//			LatLng from = new LatLng(myLocation.getLatitude(), myLocation.getLongitude());
+////			System.out.println(from.latitude + " : " + from.longitude);
+////			System.out.println(desLocation.latitude + " : " + desLocation.longitude);
+//			map.animateCamera(CameraUpdateFactory.newLatLngZoom(from, 13));
+//			
+//			// find path
+//			directions.findDirection(from, desLocation, Directions.MODE_WAY_DRIVING);
+//		} else {
+//			System.out.println("LAST LOCATION NULL");
+//		}
 		handler.post(updateLocation);
-	}
-	
-	@Override
-	public void onStatusChanged(String provider, int status, Bundle extras) {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	@Override
-	public void onProviderEnabled(String provider) {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	@Override
-	public void onProviderDisabled(String provider) {
-		// TODO Auto-generated method stub
-		
 	}
 	
 	@Override
 	public void onLocationChanged(Location location) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("LOCATION CHANGE");
+		if(!locationAvaiable && map != null) {
+			myLocation = new Location(location);
+			locationAvaiable = true;
+			LatLng from = new LatLng(myLocation.getLatitude(), myLocation.getLongitude());
+			map.animateCamera(CameraUpdateFactory.newLatLngZoom(from, 13));
+			
+			markerPlaceMeeting.position(desLocation);
+			map.addMarker(markerPlaceMeeting).showInfoWindow();
+			// find path
+			directions.findDirection(from, desLocation, Directions.MODE_WAY_DRIVING);
+			
+			System.out.println("LOCATION AVAIABLE");
+		}
 	}
 	
 	@Override
@@ -199,10 +212,29 @@ public class TrackGPS extends Activity implements OnMapReadyCallback, LocationLi
 		return isMarkerShow;
 	}
 	
-    public void getMyLocation () {
-    	myLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-    	if(myLocation == null)
-    		myLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+	@Override
+	public void onConnectionFailed(ConnectionResult arg0) {
+		// TODO Auto-generated method stub
+		LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
+	}
+
+	@Override
+	public void onConnected(Bundle arg0) {
+		// TODO Auto-generated method stub
+		LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
+	}
+
+	@Override
+	public void onConnectionSuspended(int arg0) {
+		// TODO Auto-generated method stub
+		LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
+	}
+	
+	public boolean getMyLocation () {
+		myLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+		if(myLocation == null)
+			return false;
+		return true;
     }
     
     public String loadLocation () {
@@ -238,13 +270,13 @@ public class TrackGPS extends Activity implements OnMapReadyCallback, LocationLi
     
     public void updateLocation (String result) {
 //    	map.clear();
-    	if(myLocation != null) { 
+//    	if(myLocation != null) { 
 //			LatLng from = new LatLng(myLocation.getLatitude(), myLocation.getLongitude());
 			
 			// find path
 //			directions.drawDirection();
 //			map.addMarker(markerPlaceMeeting).showInfoWindow();
-		}
+//		}
     	
     	// add & change position marker member
     	try {
@@ -319,4 +351,5 @@ public class TrackGPS extends Activity implements OnMapReadyCallback, LocationLi
 		}
     	
     }
+
 }

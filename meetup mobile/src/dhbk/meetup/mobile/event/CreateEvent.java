@@ -277,8 +277,8 @@ public class CreateEvent extends Activity implements OnClickListener, OnDateSetL
 						Intent it = new Intent();
 						it.putExtra("title", ed_title.getText().toString());
 						it.putExtra("own", Const.username);
-						it.putExtra("place", tv_place.getText().toString());
-						it.putExtra("time", tv_time.getText().toString());
+						it.putExtra("place", tv_place.getText().toString() + ";" + lat + ";" + lng);
+						it.putExtra("time", tv_date.getText().toString() + " " + tv_time.getText().toString());
 						it.putExtra("content", ed_content.getText().toString());
 						it.putExtra("idevent", String.valueOf(res));
 						it.putExtra("idown", Const.iduser);
@@ -286,7 +286,7 @@ public class CreateEvent extends Activity implements OnClickListener, OnDateSetL
 						finish();
 					} else {
 						Intent it = new Intent(getApplicationContext(), AEvent.class);
-						it.putExtra("idevent", res);
+						it.putExtra("idevent", result);
 						it.putExtra("ismember", true);
 						it.putExtra("iduser", "none");
 						it.putExtra("idusercreate", Const.iduser);

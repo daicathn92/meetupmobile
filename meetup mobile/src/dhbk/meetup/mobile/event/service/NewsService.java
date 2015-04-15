@@ -3,15 +3,28 @@ package dhbk.meetup.mobile.event.service;
 import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Intent;
+import android.location.Location;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
+import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+
 import dhbk.meetup.mobile.httpconnect.HttpConnect;
 import dhbk.meetup.mobile.utils.Utils;
 
-public class NewsService extends Service{
+public class NewsService extends Service implements 
+				LocationListener, ConnectionCallbacks, OnConnectionFailedListener{
 
 	public static final String EVENT_GETNOTIFY = "listnotify";
 	public static final String EVENT_GETINVITE = "listinvite";
@@ -24,6 +37,10 @@ public class NewsService extends Service{
 	public HttpConnect connNotify, connInvite, connLocation;
 	public Handler handlerNotify, handlerInvite, handlerLocation;
 	public LocationManager locationManager;
+	private GoogleApiClient googleApiClient;
+	private LocationRequest locationRequest;
+	
+	public double lat = 0, lng = 0;
 	
 	public Runnable getlistNotify = new Runnable() {
 		
@@ -98,9 +115,23 @@ public class NewsService extends Service{
 		connLocation = new HttpConnect();
 		locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 		
+		locationRequest = new LocationRequest();
+        locationRequest.setInterval(60000);
+        locationRequest.setFastestInterval(30000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        
+        googleApiClient = new GoogleApiClient.Builder(this)
+								.addApi(LocationServices.API)
+								.addConnectionCallbacks(this)
+								.addOnConnectionFailedListener(this)
+								.build();
+		
+		
 //		handlerInvite.postDelayed(getlistInvite, (long)(TIME_REPOST_CONNECT));
 //		handlerNotify.postDelayed(getlistNotify, (long)(TIME_REPOST_CONNECT * 1.33));
 //		handlerLocation.postDelayed(updateMyLocation, (long)(TIME_REPOST_CONNECT * 1.66));
+//        if(GooglePlayServicesUtil.isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS)
+//        	googleApiClient.connect();
 	}
 	
 	@Override
@@ -128,5 +159,34 @@ public class NewsService extends Service{
 		handlerInvite.removeCallbacks(getlistInvite);
 		handlerNotify.removeCallbacks(getlistNotify);
 		handlerLocation.removeCallbacks(updateMyLocation);
+		
+		if(googleApiClient.isConnected() || googleApiClient.isConnecting())
+			googleApiClient.disconnect();
+	}
+
+	@Override
+	public void onConnectionFailed(ConnectionResult arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onConnected(Bundle arg0) {
+		// TODO Auto-generated method stub
+		LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
+	}
+
+	@Override
+	public void onConnectionSuspended(int arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onLocationChanged(Location arg0) {
+		// TODO Auto-generated method stub
+		lat = arg0.getLatitude();
+		lng = arg0.getLongitude();
+		System.out.println("SERVICE LOCATION CHANGE");
 	}
 }

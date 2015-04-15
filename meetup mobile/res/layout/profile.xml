@@ -2,12 +2,56 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
+    android:paddingBottom="16dp"
+    android:paddingTop="16dp"
     android:orientation="vertical" >
 
-    <TextView
-        android:id="@+id/textView1"
+    <ImageButton
+        android:id="@+id/profile_imgbtn_edit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Profile" />
+        android:layout_gravity="right"
+        android:src="@drawable/edit" />
 
+    <LinearLayout 
+        android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:orientation="horizontal">
+    
+        <TextView
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="User Name : "
+	        android:textAppearance="?android:attr/textAppearanceLarge" />
+        
+        <TextView
+	        android:id="@+id/profile_tv_username"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:textAppearance="?android:attr/textAppearanceLarge" />
+        
+    </LinearLayout>
+    
+    <LinearLayout 
+        android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:paddingTop="10dp"
+	    android:orientation="horizontal">
+    
+        <TextView
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="Gender : "
+	        android:textAppearance="?android:attr/textAppearanceLarge" />
+        
+        <TextView
+	        android:id="@+id/profile_tv_gender"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:textAppearance="?android:attr/textAppearanceLarge" />
+        
+    </LinearLayout>
+    
 </LinearLayout>

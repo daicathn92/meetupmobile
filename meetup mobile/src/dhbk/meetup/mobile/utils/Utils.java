@@ -1,5 +1,8 @@
 package dhbk.meetup.mobile.utils;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+
 import android.content.Context;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
@@ -50,5 +53,19 @@ public class Utils {
 //    	System.out.println("START DAY : " + startDay);
 //    	System.out.println("END DAY : " + endDay);
     	return (delta) / (1000*60*60*24);
+    }
+    
+    public static long deltaTime (String startDate, String endDate) {
+    	SimpleDateFormat dayFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    	long start = 0, end = 0;
+    	try {
+			start = dayFormat.parse(startDate).getTime();
+			end = dayFormat.parse(endDate).getTime();
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	return (end - start)/1000;
+    	
     }
 }

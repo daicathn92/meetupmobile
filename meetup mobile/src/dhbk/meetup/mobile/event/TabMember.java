@@ -11,7 +11,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.LocationManager;
@@ -30,7 +32,6 @@ import android.widget.Toast;
 import dhbk.meetup.mobile.R;
 import dhbk.meetup.mobile.event.adapter.ListMemberAdapter;
 import dhbk.meetup.mobile.event.adapter.ListNotMemberAdapter;
-import dhbk.meetup.mobile.event.googlemap.PlaceEvent;
 import dhbk.meetup.mobile.event.googlemap.TrackGPS;
 import dhbk.meetup.mobile.event.member.InviteMember;
 import dhbk.meetup.mobile.event.object.MemberObject;
@@ -69,7 +70,7 @@ public class TabMember extends Fragment implements OnClickListener{
 		System.out.println("ONCREATE TABMEMBER");
 		conn = new HttpConnect();
 		dialog = new DialogWaiting(getActivity());
-		locationManager = (LocationManager) getActivity().getSystemService(getActivity().LOCATION_SERVICE);
+		locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
 		
 		listMemberAdapter = new ListMemberAdapter(TabMember.this, listmember);
 		listnotmemberAdapter = new ListNotMemberAdapter(this, listnotmember);
@@ -110,7 +111,7 @@ public class TabMember extends Fragment implements OnClickListener{
 		
 		// result from setting location
 		if(requestCode == REQUESTCODE_SETTINGS_LOCATION) {
-			if(resultCode == getActivity().RESULT_OK) {
+			if(resultCode == Activity.RESULT_OK) {
 				if(Utils.isGPSEnable(locationManager)) {
 					Intent it = new Intent(getActivity().getApplicationContext(), TrackGPS.class);
 					if(fromAEvent) {

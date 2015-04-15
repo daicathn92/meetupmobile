@@ -12,7 +12,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.LocationManager;
@@ -52,7 +54,7 @@ public class TabHome extends Fragment implements OnClickListener{
 	private String idevent = "0", nextpoint, iduser;
 	boolean ismember = false;
 	boolean isnextpoint = false;
-	private String idusercreate;
+	private String idusercreate = "0";
 	
 	public LocationManager locationManager;
 	public double lat, lng;
@@ -63,7 +65,7 @@ public class TabHome extends Fragment implements OnClickListener{
 		super.onCreate(savedInstanceState);
 		conn = new HttpConnect();
 		dialog = new DialogWaiting(getActivity());
-		locationManager = (LocationManager) getActivity().getSystemService(getActivity().LOCATION_SERVICE);
+		locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
 		System.out.println("ONCREATE TABHOME");
 	}
 	
@@ -86,6 +88,12 @@ public class TabHome extends Fragment implements OnClickListener{
 		ImageButton imgbtn_nextpoint = (ImageButton) v.findViewById(R.id.tabhome_imgbtn_nextpoint);
 		ImageButton imgbtn_edit = (ImageButton) v.findViewById(R.id.tabhome_imgbtn_edit);
 		ImageButton imgbtn_join = (ImageButton) v.findViewById(R.id.tabhome_imgbtn_join);
+		
+		if(idusercreate == null)
+			System.out.println("IDusercreate null");
+		if(idevent == null)
+			System.out.println("IDevent null");
+//		((AEvent)getActivity()).idevent;
 		
 		if(idusercreate.equals(Const.iduser)) {
 			imgbtn_nextpoint.setOnClickListener(this);
@@ -235,19 +243,22 @@ public class TabHome extends Fragment implements OnClickListener{
 
 	public void setIdevent(String idevent) {
 		this.idevent = idevent;
-		System.out.println("SET IDEVENT");
+		System.out.println("SET IDEVENT : " + this.idevent);
 	}
 	
 	public void setIsmember(boolean ismember) {
 		this.ismember = ismember;
+		System.out.println("SET id member : " + this.ismember);
 	}
 	
 	public void setIdusercreate(String idusercreate) {
 		this.idusercreate = idusercreate;
+		System.out.println("set idusercreate : " + this.idusercreate);
 	}
 	
 	public void setIsnextpoint(boolean isnextpoint) {
 		this.isnextpoint = isnextpoint;
+		System.out.println("SET id nextpoint : " + this.isnextpoint);
 	}
 	
 	public String loadInfoEvent () {
@@ -257,7 +268,7 @@ public class TabHome extends Fragment implements OnClickListener{
 			values.add(new String[] {"idevent", idevent});
 			HttpResponse response = conn.sendRequestGet(url, null, values);
 			String result = EntityUtils.toString(response.getEntity());
-			System.out.println("RESULT : " + result);
+			System.out.println("RESULT TABHOME : " + result);
 			return result;
 		} catch (ClientProtocolException e) {
 			// TODO Auto-generated catch block
@@ -384,7 +395,7 @@ public class TabHome extends Fragment implements OnClickListener{
 				Intent it = new Intent();
 				it.putExtra("idevent", idevent);
 				it.putExtra("idusercreate", idusercreate);
-				getActivity().setResult(EventHomePage.RESULT_OK, it);
+				getActivity().setResult(Activity.RESULT_OK, it);
 				getActivity().finish();
 //				Intent it = new Intent(getActivity().getApplicationContext(), AEvent.class);
 //				it.putExtra("idevent", idevent);

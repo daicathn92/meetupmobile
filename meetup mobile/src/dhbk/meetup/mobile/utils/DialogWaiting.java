@@ -25,6 +25,17 @@ public class DialogWaiting {
 		} 
 	}
 	
+	public void showProgressDialog (String message) {
+		if(pg_dialog == null ) {
+			pg_dialog = new ProgressDialog(context);
+			pg_dialog.setCancelable(false) ;
+			pg_dialog.setTitle("Processing");
+			pg_dialog.setMessage(message);
+			pg_dialog.setIndeterminate(false);
+			pg_dialog.show();
+		} 
+	}
+	
 	public void closeProgressDialog () {
 		if(pg_dialog != null) {
 			if(pg_dialog.isShowing())

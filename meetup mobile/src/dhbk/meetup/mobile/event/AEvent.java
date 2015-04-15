@@ -28,9 +28,9 @@ public class AEvent extends FragmentActivity implements OnTabChangeListener, OnP
 	private TabHost tabhost;
 	private ViewPager viewPage;
 	
-	private String idevent = "";
+	public String idevent = "";
 	private boolean ismember = false;
-	private String idusercreate = "-1", iduser;
+	public String idusercreate = "-1", iduser;
 	
 	public TabHome th;
 	
@@ -55,7 +55,7 @@ public class AEvent extends FragmentActivity implements OnTabChangeListener, OnP
 		}
 		
 		System.out.println("IDEVENT : " + idevent);
-		
+			
 		tabhost = (TabHost) findViewById(android.R.id.tabhost);
 		tabhost.setup();
 		tabhost.setOnTabChangedListener(this);
@@ -80,7 +80,7 @@ public class AEvent extends FragmentActivity implements OnTabChangeListener, OnP
 			tabhost.addTab(tsDoc);
 		}
 		
-		PageAdapter pageAdapter = new PageAdapter(getSupportFragmentManager(), getListFragments());	
+		PageAdapter pageAdapter = new PageAdapter(getSupportFragmentManager(), getListFragments());
 		viewPage.setAdapter(pageAdapter);
 		viewPage.setOnPageChangeListener(this);
 	}
@@ -114,17 +114,19 @@ public class AEvent extends FragmentActivity implements OnTabChangeListener, OnP
 		
 		th = new TabHome();
 		th.setIdevent(idevent);
-		th.setIsmember(ismember);
+		System.out.println("BEFORE SET : " + idevent + " " + idusercreate);
 		th.setIdusercreate(idusercreate);
+		th.setIsmember(ismember);
 		list.add(th);
 		
-		if(ismember) {
+		if(ismember || idusercreate.equals(Const.iduser)) {
 			TabMember tm =new TabMember();
 			TabChat tc = new TabChat();
 			TabDoc td = new TabDoc();
 			
 			tc.setIdevent(idevent);
 			tm.setIdevent(idevent);
+			td.setIdevent(idevent);
 			
 			list.add(tm);
 			list.add(tc);

@@ -25,14 +25,6 @@ public class HttpConnect {
 		httpClient = new DefaultHttpClient() ;
 	}
 	
-	/**
-	 * send request get
-	 * @param url
-	 * @param headers
-	 * @return HttpResponse
-	 * @throws ClientProtocolException
-	 * @throws IOException
-	 */
 	public HttpResponse sendRequestGet (String url, Header[] headers, ArrayList<String[]> values) 
 						throws ClientProtocolException, IOException {
 		String urlfull = url;
@@ -44,6 +36,7 @@ public class HttpConnect {
 			}
 			String paramsUrl = URLEncodedUtils.format(params, HTTP.UTF_8);
 			urlfull = urlfull + "?" + paramsUrl;
+			System.out.println("PARAM : " + paramsUrl);
 		}
 		HttpGet request = new HttpGet(urlfull) ;
 		
@@ -55,15 +48,6 @@ public class HttpConnect {
 		return httpClient.execute(request) ;
 	}
 	
-	/**
-	 * send request post
-	 * @param url
-	 * @param headers
-	 * @param values = name : value
-	 * @return HttpResponse
-	 * @throws ClientProtocolException
-	 * @throws IOException
-	 */
 	public HttpResponse sendRequestPost (String url, Header[] headers, ArrayList<String[]> values) 
 						throws ClientProtocolException, IOException {
 		HttpPost request = new HttpPost(url) ;

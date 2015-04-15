@@ -40,7 +40,9 @@ import android.widget.Toast;
 import dhbk.meetup.mobile.R;
 import dhbk.meetup.mobile.event.adapter.DynamicListView;
 import dhbk.meetup.mobile.event.adapter.ListEventLocalAdapter;
+import dhbk.meetup.mobile.event.object.DocumentObject;
 import dhbk.meetup.mobile.event.object.EventObject;
+import dhbk.meetup.mobile.event.storage.SwiftApi;
 import dhbk.meetup.mobile.httpconnect.HttpConnect;
 import dhbk.meetup.mobile.utils.Const;
 import dhbk.meetup.mobile.utils.DialogWaiting;
@@ -59,9 +61,12 @@ public class ImportTemplate extends Activity implements
 	
 	private HttpConnect conn;
 	private DialogWaiting dialog;
+	private SwiftApi swiftApi;
+	@SuppressLint("SimpleDateFormat")
 	public SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	
 	private ArrayList<EventObject> listEvent_local = new ArrayList<EventObject>();
+	private ArrayList<String[]> listTemplateOnline = new ArrayList<String[]>();
 	
 	private TextView tv_date, tv_template;
 	private ListEventLocalAdapter adapter;
@@ -80,6 +85,7 @@ public class ImportTemplate extends Activity implements
 		setContentView(R.layout.importtemplate);
 		
 		conn = new HttpConnect();
+		swiftApi = new SwiftApi();
 		dialog = new DialogWaiting(ImportTemplate.this);
 		
 		calendar = Calendar.getInstance();
@@ -245,7 +251,15 @@ public class ImportTemplate extends Activity implements
 			}
 			return true;
 		case R.id.menu_template_online :
-			
+			if(Utils.isConnectNetwork(ImportTemplate.this)) {
+				if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+					new asyncListTemplateOnline().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+				} else {
+					new asyncListTemplateOnline().execute() ;
+				}
+			} else {
+				Toast.makeText(getApplicationContext(), "Not connected network", Toast.LENGTH_SHORT).show();
+			}
 			return true;
 		default : return false;
 		}
@@ -339,7 +353,6 @@ public class ImportTemplate extends Activity implements
 		return jsa.toString();
 	}
 	
-	//----------------action asyncTask----------------------------------------
 	public String createListEvent () {
 		String url = Const.DOMAIN_NAME + EVENT_CREATEMULTI;
 		
@@ -372,6 +385,17 @@ public class ImportTemplate extends Activity implements
 		}
 	}
 	
+	public void getListTemplateOnline () {
+		listTemplateOnline = swiftApi.getListFile(SwiftApi.CONTAINER_TEMPLATES);
+		for(int i = 0; i < listTemplateOnline.size(); i++) {
+			if(listTemplateOnline.get(i)[0].equals("")) {
+				listTemplateOnline.remove(i);
+				i--;
+			}
+		}
+	}
+	
+	//----------------action asyncTask----------------------------------------
 	private class asyncCreateListEvent extends AsyncTask<String, Void, String> {
 
 		@Override
@@ -405,4 +429,108 @@ public class ImportTemplate extends Activity implements
 		
 	}
 	
+	private class asyncListTemplateOnline extends AsyncTask<String, Void, Void> {
+		
+		@Override
+		protected void onPreExecute() {
+			// TODO Auto-generated method stub
+			super.onPreExecute();
+			dialog.showProgressDialog();
+		}
+		
+		@Override
+		protected Void doInBackground(String... params) {
+			// TODO Auto-generated method stub
+			getListTemplateOnline();
+			return null;
+		}
+		
+		@Override
+		protected void onPostExecute(Void result) {
+			// TODO Auto-generated method stub
+			super.onPostExecute(result);
+			dialog.closeProgressDialog();
+			if(listTemplateOnline.size() > 0) {
+				final ArrayList<String> listTemplate = new ArrayList<String>();
+				for(String[] ss : listTemplateOnline)
+					listTemplate.add(ss[1]);
+				final ListView lv = new ListView(ImportTemplate.this);
+				ArrayAdapter<String> adapter = new ArrayAdapter<String>(ImportTemplate.this, android.R.layout.simple_list_item_1, listTemplate);
+				lv.setAdapter(adapter);
+				final AlertDialog alertdialog = new AlertDialog.Builder(ImportTemplate.this)
+				.setTitle("Choose Temple")
+				.setView(lv)
+				.show();
+				
+				lv.setOnItemClickListener(new OnItemClickListener() {
+					@Override
+					public void onItemClick(AdapterView<?> arg0, View arg1,
+							int arg2, long arg3) {
+						// TODO Auto-generated method stub
+						System.out.println("CLICK ");
+						tv_template.setText(listTemplate.get(arg2));
+//						setListEventFromTemplate();
+						if(Utils.isConnectNetwork(ImportTemplate.this)) {
+							if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+								new asyncReadTemplateOnline().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, String.valueOf(arg2));
+							} else {
+								new asyncReadTemplateOnline().execute(String.valueOf(arg2)) ;
+							}
+						} else {
+							Toast.makeText(getApplicationContext(), "Not connected network", Toast.LENGTH_SHORT).show();
+						}
+						alertdialog.dismiss();
+					}
+				});
+			} else {
+				Toast.makeText(getApplicationContext(), "No item template", Toast.LENGTH_SHORT).show();
+			}
+		}
+	}
+	
+	private class asyncReadTemplateOnline extends AsyncTask<String, Void, String> {
+
+		@Override
+		protected void onPreExecute() {
+			// TODO Auto-generated method stub
+			super.onPreExecute();
+			dialog.showProgressDialog();
+		}
+		
+		@Override
+		protected String doInBackground(String... params) {
+			// TODO Auto-generated method stub
+			int position = Integer.parseInt(params[0]);
+			return swiftApi.readObject(SwiftApi.CONTAINER_TEMPLATES, listTemplateOnline.get(position)[0], listTemplateOnline.get(position)[1]);
+		}
+		
+		@Override
+		protected void onPostExecute(String result) {
+			// TODO Auto-generated method stub
+			super.onPostExecute(result);
+			dialog.closeProgressDialog();
+			if(result == null) {
+				Toast.makeText(getApplicationContext(), "Import fail. Try again!", Toast.LENGTH_SHORT).show();
+			} else {
+				ArrayList<EventObject> list = FormatFileApp.formatFileToEvent(result);
+				if(list.size() > 0) {
+					listEvent_local.clear();
+					for(EventObject eo : list) {
+						listEvent_local.add(eo);
+					}
+				}
+				
+				ImportTemplate.this.adapter = new ListEventLocalAdapter(ImportTemplate.this, listEvent_local);
+				listView.setCheeseList(listEvent_local);
+		        listView.setAdapter(ImportTemplate.this.adapter);
+		        listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+	        	listView.isDraggable = true;
+	        	listView.fromLocal = true;
+	//        	ImportTemplate.this.adapter.notifyDataSetChanged();
+				System.out.println("SIZE : " +listEvent_local.size());
+				setTimeDateEvent();
+			}
+		}
+		
+	}
 }

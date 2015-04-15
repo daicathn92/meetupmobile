@@ -126,6 +126,7 @@ public class AEventOfTour extends FragmentActivity implements OnTabChangeListene
 			
 			tc.setIdevent(idevent);
 			tm.setIdevent(idevent);
+			td.setIdevent(idevent);
 			tm.setFromAEvent(false);
 			
 			list.add(tm);
